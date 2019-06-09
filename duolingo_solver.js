@@ -8,8 +8,13 @@ It's intended purpose is for completing and maxing out your skill tree and
 lessons in the Duolingo web application.
 
 HOW TO USE:
-1. Paste the following code into the Google Chrome console and hit ENTER.
-2. Type the command 'start()' and hit ENTER
+1. Download the following chrome extension
+  -- Name:    Custom JavaScript for websites
+  -- Author:  hromada.dan
+  -- Link:    https://chrome.google.com/webstore/detail/custom-javascript-for-web/poakhlngfciodnhlhhgnaaelnpjljija/related?hl=en
+
+2. Paste the following code into the extension and click 'SAVE'
+3. The page should automatically restart and begin completing lessons
 
 ADDITIONAL INFO:
 You can change the logging of debug information in the console using 'debugLogEnabled'
@@ -22,10 +27,10 @@ and the lesson completion stragies (in what order it does the lessons).
 // ---------------- GLOBAL VARIABLES ----------------
 // --------------------------------------------------
 
-let duolingoAIEnabled = false;
+let duolingoAIEnabled = true;
 let fakedLastAnswer = false;
 let debugLogEnabled = false;
-let stepEvery = 150;
+let stepEvery = 100;
 
 let saveAndClearLessonDataAfterEachLesson = true;
 let lessonNumber = undefined;
@@ -93,6 +98,7 @@ const initializeLanguageAnswerData = () => {
     answerData[language]['meaning'] = {};
     answerData[language]['pairs'] = {};
     answerData[language]['missing-word'] = {};
+    answerData[language]['complete-translation'] = {};
   }
 }
 
@@ -148,22 +154,34 @@ const getCurrentTime = () => {
   return Date().substring(0, 24);
 }
 
+const calcMaxLessons = (lessonItemProps) => {
+  return lessonItemProps.lessons * 12;
+}
+
 // print our overall progress in the skill tree
 const printTreeProgress = () => {
   const lessonItems = getLessonItems();
   const totalItems = lessonItems.length;
   let completedItems = 0;
-    let maxedOutItems = 0;
+  let maxedOutItems = 0;
+
+  let totalLessons = 0;
+  let totalFinishedLessons = 0;
 
   for (let i = 0; i < totalItems; i++) {
     const lessonItemProps = FindReact(lessonItems[i]).props.children.props.children[0].props.skill;
-    if (lessonItemProps.accessible && lessonItemProps.finishedLevels > 0) { completedItems++; }
-    if (lessonItemProps.accessible && lessonItemProps.finishedLevels === lessonItemProps.levels) { maxedOutItems++; }
+    if (lessonItemProps.accessible) {
+      if (lessonItemProps.finishedLevels > 0) { completedItems++; }
+      if (lessonItemProps.finishedLevels === lessonItemProps.levels) { maxedOutItems++; }
+    }
+    totalLessons += calcMaxLessons(lessonItemProps);
+    totalFinishedLessons += lessonItemProps.finishedLessons;
   }
 
   cPrintColor('-- Progress as of ' + getCurrentTime() + ':', '#000', '#FFFFFF', true);
-  cPrintColor('-- Completed ' + completedItems + ' of ' + totalItems + ' lessons (' + ((completedItems/totalItems) * 100).toFixed(0) + '%).', '#000', '#38bc54', true);
-  cPrintColor('-- Maxed-out ' + maxedOutItems + ' of ' + totalItems + ' lessons (' + ((maxedOutItems/totalItems) * 100).toFixed(0) + '%).', '#000', '#ebd532', true);
+  cPrintColor('-- Completed ' + completedItems + ' of ' + totalItems + ' skills (' + ((completedItems/totalItems) * 100).toFixed(0) + '%).', '#000', '#38bc54', true);
+  cPrintColor('-- Maxed-out ' + maxedOutItems + ' of ' + totalItems + ' skills (' + ((maxedOutItems/totalItems) * 100).toFixed(0) + '%).', '#000', '#ebd532', true);
+  // cPrintColor('-- Completed ' + totalFinishedLessons + ' of ' + totalLessons + ' lessons (' + ((totalFinishedLessons/totalLessons) * 100).toFixed(0) + '%).', '#000', '#ebd532', true);
 }
 
 // -----------------------------------------------------
@@ -248,6 +266,8 @@ const getPromptType = () => {
     switch (challengeHeader.substring(0, 13)) {
       case ('What sound do'): // What sound does this make?
         return 'sound';
+      case ('Complete the '): // Complete the translation
+        return 'complete-translation';
       case ('Select the wo'): // Select the word for "[WORD]"
         return 'pictures';
       case ('Select the co'): // Select the correct characters
@@ -263,6 +283,7 @@ const getPromptType = () => {
       case ('Match the pai'): // Match the pairs
         return 'pairs';
       case ('Type what you'): // Type what you hear
+      case ('Select what y'): // Select what you hear
         return 'listening';
       case ('Click the mic'): // Click the microphone and say:
         return 'speaking';
@@ -378,6 +399,8 @@ const getPrompt = () => {
   switch (promptType) {
     case ('short-text'):
       return getChallengeHeader().match(/“([^”]*)”/)[1];
+    case ('complete-translation'):
+      return getFirstElementWithClassName('OGy1T').innerText + ': ' + getFirstElementWithClassName('B04k5').innerText;
     case ('text'):
     case ('text-reverse'):
       return getFirstElementWithClassName('oR3Zt').innerText;
@@ -518,12 +541,19 @@ const startNextLesson = () => {
     // reset answer data
     answerData = {};
     initializeLanguageAnswerData();
+
+    // refresh webpage to stop chrome memory from overflowing
+    location.reload();
   }
 
 
 
   if (getStartLessonButton()) { getStartLessonButton().click(); }
   else if (getStartCheckpointButton()) { getStartCheckpointButton().click(); }
+}
+
+const setCompleteTranslationTextArea = (answer) => {
+  setTextArea(getDataTestElementsThatMatch('challenge-text-input')[0], answer);
 }
 
 
@@ -535,17 +565,23 @@ const answerDuolingoPrompt = (answerSet) => {
     case ('text-reverse'):
       setDuolingoTextArea(answerSet.values().next().value); // answer with the first value, doesn't matter since it's a text question
       break;
+    case ('complete-translation'):
+      setCompleteTranslationTextArea(answerSet.values().next().value);
+      break;
     case ('short-text'):
       const meaningAnswers = getMeaningAnswers();
       if (meaningAnswers.length > 0) {
         answerSet.forEach((recordedAnswer) => {
+          let i = 0;
           meaningAnswers.forEach((meaningAnswer) => {
             let matchedAnswer = recordedAnswer.match(new RegExp(meaningAnswer.innerText + '(.*)'));
-            if (matchedAnswer) {
-              meaningAnswer.click();
+            if (matchedAnswer && getShortTextArea().value === '') {
+              cPrint(matchedAnswer);
+              selectMeaningAnswer(i);
               setShortTextArea(matchedAnswer[1]);
               return;
             }
+          i++;
           });
         });
       } else {
@@ -613,6 +649,9 @@ const fakeAnswerPrompt = () => {
       if (getMeaningAnswers().length > 0) { selectMeaningAnswer(0); } // sometimes you must select an answer AND write, how 'bout that?
       setShortTextArea('I don\'t know the answer :(');
       break;
+    case ('complete-translation'):
+      setCompleteTranslationTextArea(':(');
+      break;
     case ('text'):
     case ('text-reverse'):
       setDuolingoTextArea('I don\'t know the answer :(');
@@ -668,6 +707,10 @@ const solvePairs = () => {
   }
 }
 
+const isCheckAnswerButtonDisabled = () => {
+  return getDuolingoCheckAnswerButton().getAttribute('disabled') == '';
+}
+
 const solve = () => {
   const promptType = getPromptType();
   // we just want to disabled the listening/speaking questions
@@ -686,7 +729,7 @@ const solve = () => {
     document.getElementsByClassName('_1tSEs')[1].click();
     clickCheckAnswerButton();
   } else if (promptType === 'pairs') {
-    solvePairs();
+    Pairs();
   } else {
     const prompt = getPrompt();
     const answer = answerData[getLanguage()][promptType][prompt];
@@ -695,9 +738,10 @@ const solve = () => {
       if (noSelectedAnswer()) {
         fakeAnswerPrompt();
         fakedLastAnswer = true;
-      } else if (!getDuolingoCheckAnswerButton()) {
+      } else if (isCheckAnswerButtonDisabled()) {
         // if we have selected an answer but the check answer button isn't available then something is wrong
-        getSkipButton().click();
+        const skipButton = getSkipButton();
+        if (skipButton) { skipButton.click(); }
       }
     } else {
       fakeAnswerPrompt();
@@ -706,11 +750,19 @@ const solve = () => {
   }
 }
 
+const getCurrentAnswer = () => {
+  return answerData[getLanguage()][getPromptType()][getPrompt()];
+}
+
 const updateAnswers = () => {
   const suggestedAnswer = getSuggestedAnswer();
   const prompt = getPrompt();
   const promptType = getPromptType();
-  if (suggestedAnswer) {
+  if (getAnswerHeader() === "Correct solution:" && promptType === 'complete-translation') {
+    const translationAnswerSet = answerData[getLanguage()][promptType][prompt] || new Set([]);
+    answerData[getLanguage()][promptType][prompt] = translationAnswerSet.add(getFirstElementWithClassName('_3Fow7').innerText);
+  }
+  else if (suggestedAnswer) {
     if (getAnswerHeader() === "Correct solutions:") {
       const suggestedAnswers = getSuggestedAnswers();
       let textAnswerSet = answerData[getLanguage()][promptType][prompt] || new Set([]);
@@ -817,13 +869,23 @@ const stop = () => {
   duolingoAIEnabled = false;
 }
 
-const setSpeed = (n) => {
-  stepEvery = n;
+let interval = undefined;
+
+// set chrome to trigger the navigation function every 'stepEvery' milliseconds
+const enableIntervalTrigger = () => {
+  interval = setInterval(() => {
+    if (duolingoAIEnabled) {
+      navigate();
+    }
+  }, stepEvery);
 }
 
-// trigger the navigation function every 'stepEvery' milliseconds
-setInterval(() => {
-  if (duolingoAIEnabled) {
-    navigate();
-  }
-}, stepEvery)
+// modify the interval at which we trigger our code
+const setSpeed = (n) => {
+  clearInterval(interval);
+  stepEvery = n;
+  enableIntervalTrigger();
+}
+
+// enable our code trigger
+enableIntervalTrigger();
