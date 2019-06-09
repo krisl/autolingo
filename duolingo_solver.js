@@ -712,7 +712,7 @@ const isCheckAnswerButtonDisabled = () => {
 }
 
 const keyboardDisabled = () => {
-  getDataTestElementsThatMatch('player-toggle-keyboard')[0].innerText === 'USE KEYBOARD';
+  return getDataTestElementsThatMatch('player-toggle-keyboard')[0].innerText === 'USE KEYBOARD';
 }
 
 const solve = () => {
