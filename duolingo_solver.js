@@ -711,6 +711,10 @@ const isCheckAnswerButtonDisabled = () => {
   return getDuolingoCheckAnswerButton().getAttribute('disabled') == '';
 }
 
+const keyboardDisabled = () => {
+  getDataTestElementsThatMatch('player-toggle-keyboard')[0].innerText === 'USE KEYBOARD';
+}
+
 const solve = () => {
   const promptType = getPromptType();
   // we just want to disabled the listening/speaking questions
@@ -729,7 +733,7 @@ const solve = () => {
     document.getElementsByClassName('_1tSEs')[1].click();
     clickCheckAnswerButton();
   } else if (promptType === 'pairs') {
-    Pairs();
+    solvePairs();
   } else {
     const prompt = getPrompt();
     const answer = answerData[getLanguage()][promptType][prompt];
@@ -831,6 +835,9 @@ const navigate = () => {
       startNextLesson();
       break;
     case ('lesson'):
+      if (keyboardDisabled()) {
+        getDataTestElementsThatMatch('player-toggle-keyboard')[0].click();
+      }
       if (getDuolingoCheckAnswerButton().disabled || getDuolingoCheckAnswerButton().innerText === 'NEXT') {
         solve();
       } else if (getDuolingoCheckAnswerButton().innerText === 'CHECK') {
