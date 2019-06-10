@@ -2,6 +2,15 @@
 // ---------------- DUOLINGO LESSON COMPLETER ----------------
 // -----------------------------------------------------------
 
+// TODO:
+// -- main "controller" tab that completes bare minimum strategy
+// -- when this controller completes a lesson to its bare minimum, it opens a new tab:
+// -------- this new tab complets the lesson until it is maxed out and then closes
+// NEED TO FIGURE OUT HOW TO TELL THE NEW TAB TO ONLY COMPLETE THAT LESSON
+
+
+
+
 /*
 The following spaghetti code was written by Kristofer Brethower (unless otherwise specified).
 It's intended purpose is for completing and maxing out your skill tree and
@@ -73,6 +82,18 @@ window.FindReact = function(dom) {
     } else { // react <16
         return internalInstance._currentElement._owner._instance;
     }
+}
+
+// add property and value pair to the "external" property of the new window that you are creating
+const openNewTabWithExtenalValue = (property, value) => {
+	a = document.createElement('a');
+	a.href = "javascript: var win = window.open(' '); win.focus(); win.onload = () => { win.external." + property + " = " + value.toString() + "; };"
+	a.click();
+}
+
+// create new tab for skill number 'n' in the skill tree
+const openNewTabForSkill = (n) => {
+  openNewTabWithExtenalValue('skillToComplete', n);
 }
 
 // ---------------------------------------------
@@ -574,7 +595,7 @@ const answerDuolingoPrompt = (answerSet) => {
         answerSet.forEach((recordedAnswer) => {
           let i = 0;
           meaningAnswers.forEach((meaningAnswer) => {
-            let matchedAnswer = recordedAnswer.match(new RegExp(meaningAnswer.innerText + '(.*)'));
+            let matchedAnswer = recordedAnswer.match(new RegExp('^' + meaningAnswer.innerText + '(.*)'));
             if (matchedAnswer && getShortTextArea().value === '') {
               cPrint(matchedAnswer);
               selectMeaningAnswer(i);
