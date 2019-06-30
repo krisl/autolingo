@@ -22,8 +22,9 @@ HOW TO USE:
   -- Author:  hromada.dan
   -- Link:    https://chrome.google.com/webstore/detail/custom-javascript-for-web/poakhlngfciodnhlhhgnaaelnpjljija/related?hl=en
 
-2. Paste the following code into the extension and click 'SAVE'
-3. The page should automatically restart and begin completing lessons
+2. Paste the following code into the extension and click 'SAVE
+3. Disable any pop-up disablers / enable duolingo.com to always generate tabs
+4. The page should automatically restart and begin completing lessons
 
 ADDITIONAL INFO:
 You can change the logging of debug information in the console using 'debugLogEnabled'
@@ -45,11 +46,15 @@ let saveAndClearLessonDataAfterEachLesson = true;
 let lessonNumber = undefined;
 let lessonName = '';
 
+let createdTabsForTheseSkills = {};
+const maximumOpenTabs = 5;
+let currentlyOpenTabs = 1;
+
 // Skill Tree Completion Strategies:
 // bare-minimum:               complete the bare minimum of each lesson required to advance
 // max-out:                    max out each lesson before progressing to the next
 // bare-minimum-then-max-out:  complete bare minimum, then max out starting with the last lesson
-let skillTreeCompletionStrategy = 'max-out';
+let skillTreeCompletionStrategy = 'bare-minimum';
 
 const setStrategyToMaxOut = () => {
   skillTreeCompletionStrategy = 'max-out';
@@ -84,16 +89,33 @@ window.FindReact = function(dom) {
     }
 }
 
+// ---------------------------------------------------
+// ---------------- TAB MANIPULATION  ----------------
+// ---------------------------------------------------
+
 // add property and value pair to the "external" property of the new window that you are creating
-const openNewTabWithExtenalValue = (property, value) => {
-	a = document.createElement('a');
-	a.href = "javascript: var win = window.open(' '); win.focus(); win.onload = () => { win.external." + property + " = " + value.toString() + "; };"
-	a.click();
+// TODO wtf is going on here i actually have no idea why it won't just make the windows
+const openNewTabWithExtenalValue = (value) => {
+	const win = window.open(' ');
+  if (win) {
+    win.focus();
+    win.onload = () => { win.external.skillToComplete = value; };
+  } else {
+    console.debug('opening new tab didnt work');
+  }
 }
 
 // create new tab for skill number 'n' in the skill tree
-const openNewTabForSkill = (n) => {
-  openNewTabWithExtenalValue('skillToComplete', n);
+const openNewTabForSkill = (skillId) => {
+  openNewTabWithExtenalValue(skillId);
+}
+
+const closeTab = () => {
+  window.close();
+}
+
+const getSkillToComplete = () => {
+  return window.external.skillToComplete;
 }
 
 // ---------------------------------------------
@@ -179,6 +201,10 @@ const calcMaxLessons = (lessonItemProps) => {
   return lessonItemProps.lessons * 12;
 }
 
+const getLessonItemProps = (lessonItem) => {
+  return FindReact(lessonItem).props.children.props.children[0].props.skill;
+}
+
 // print our overall progress in the skill tree
 const printTreeProgress = () => {
   const lessonItems = getLessonItems();
@@ -190,7 +216,7 @@ const printTreeProgress = () => {
   let totalFinishedLessons = 0;
 
   for (let i = 0; i < totalItems; i++) {
-    const lessonItemProps = FindReact(lessonItems[i]).props.children.props.children[0].props.skill;
+    const lessonItemProps = getLessonItemProps(lessonItems[i]);
     if (lessonItemProps.accessible) {
       if (lessonItemProps.finishedLevels > 0) { completedItems++; }
       if (lessonItemProps.finishedLevels === lessonItemProps.levels) { maxedOutItems++; }
@@ -363,7 +389,7 @@ const selectPicturesAnswer = (n) => {
 }
 
 const getCharactersAnswers = () => {
-  return getFirstElementWithClassName('_2Hx-A').children;
+  return getFirstElementWithClassName('_2dSPZ').children;
 }
 
 const selectCharactersAnswer = (n) => {
@@ -387,7 +413,8 @@ const getChallengeHeader = () => {
 }
 
 const getAnswerHeader = () => {
-  return getFirstElementWithClassName('_3gDW-').innerText.match(/^([^\n]*)/)[1];
+  const answerHeader = getFirstElementWithClassName('jJFkx') || getFirstElementWithClassName('_3H0e2');
+  return answerHeader.innerText.match(/^([^\n]*)/)[1];
 }
 
 const getDataTestElementsThatMatch = (value) => {
@@ -545,32 +572,34 @@ const getStartCheckpointButton = () => {
   return getFirstElementWithClassName('Wl6Sg');
 }
 
-const startNextLesson = () => {
+const startNextLesson = (lessonId) => {
 
-  const prevLessonName = lessonName;
-  const prevLessonNumber = lessonNumber;
+  if (lessonId) { Array.from(getLessonItems()).filter(x => { return getLessonItemProps(x).id === lessonId; })[0].click(); }
+  else {
+    const prevLessonName = lessonName;
+    const prevLessonNumber = lessonNumber;
 
-  // this mutates lessonName to be the name of the next lesson
-  getNextLesson().click();
+    // this mutates lessonName to be the name of the next lesson
+    getNextLesson().click();
 
-  // if we are on a new lesson now, save the lesson data and move on to the next lesson
-  if (saveAndClearLessonDataAfterEachLesson && prevLessonName && (prevLessonName !== lessonName)) {
+    // if we are on a new lesson now, save the lesson data and move on to the next lesson
+    if (saveAndClearLessonDataAfterEachLesson && prevLessonName && (prevLessonName !== lessonName)) {
 
-    // save answer data
-    console.save(answerData, getLanguage() + '- Lesson ' + prevLessonNumber + ' - ' + prevLessonName + '.json');
+      // save answer data
+      console.save(answerData, getLanguage() + '- Lesson ' + prevLessonNumber + ' - ' + prevLessonName + '.json');
 
-    // reset answer data
-    answerData = {};
-    initializeLanguageAnswerData();
+      // reset answer data
+      answerData = {};
+      initializeLanguageAnswerData();
 
-    // refresh webpage to stop chrome memory from overflowing
-    location.reload();
+      // refresh webpage to stop chrome memory from overflowing
+      // location.reload();
+    }
   }
-
-
 
   if (getStartLessonButton()) { getStartLessonButton().click(); }
   else if (getStartCheckpointButton()) { getStartCheckpointButton().click(); }
+
 }
 
 const setCompleteTranslationTextArea = (answer) => {
@@ -620,15 +649,6 @@ const answerDuolingoPrompt = (answerSet) => {
       });
       break;
     case ('pictures'):
-      const picturesAnswers = getPicturesAnswers();
-      answerSet.forEach((text) => {
-        for (let i = 0; i < picturesAnswers.length; i++) {
-          if (picturesAnswers[i].innerText.match(/\n(.*)/)[1] === text) {
-            selectPicturesAnswer(i);
-          }
-        }
-      });
-      break;
     case ('characters'):
       const charactersAnswers = getCharactersAnswers();
       answerSet.forEach((text) => {
@@ -842,6 +862,21 @@ const skipCreateProfileDialog = () => {
   }
 }
 
+const skillMaxedOut = (skillId) => {
+  return getLessonItemProps(Array.from(getLessonItems()).filter(x => { return getLessonItemProps(x).id === skillId; })[0]).finishedLevels === 5;
+}
+
+const launchTabsForFinishedLessons = () => {
+  let foundTab = false;
+  Array.from(getLessonItems()).filter((skill) => {
+    const skillProps = getLessonItemProps(skill);
+    return skillProps.finishedLevels > 0 && !skillMaxedOut(skillProps.id) && !createdTabsForTheseSkills[skillProps.id];
+  }).map((skill) => {
+    openNewTabForSkill(getLessonItemProps(skill).id);
+    createdTabsForTheseSkills[getLessonItemProps(skill).id] = true;
+  });
+}
+
 // todo give random answers for the checkpoint questions (you pass them anyways)
 const navigate = () => {
 
@@ -854,7 +889,18 @@ const navigate = () => {
   switch (getPage()) {
     case ('skill-tree'):
       printTreeProgress();
-      startNextLesson();
+      const skillToComplete = getSkillToComplete();
+      if (skillToComplete) {
+        if (!skillMaxedOut(skillToComplete)) {
+          startNextLesson(skillToComplete);
+        } else {
+          closeTab();
+        }
+      }
+      else {
+        launchTabsForFinishedLessons();
+        if (duolingoAIEnabled) { startNextLesson(); }
+      }
       break;
     case ('lesson'):
       if (keyboardDisabled()) {
@@ -917,4 +963,4 @@ const setSpeed = (n) => {
 }
 
 // enable our code trigger
-enableIntervalTrigger();
+setTimeout(enableIntervalTrigger, 1500);
