@@ -22,7 +22,7 @@ export default class DuolingoSkill extends ReactUtils {
         if (!status_node) { return; }
 
         const status = this.ReactInternal(status_node).return.return.stateNode.props.status
-        throw new Error(status)
+        // throw new Error(status)
 
         switch (status) {
             // loading this lesson
@@ -31,13 +31,21 @@ export default class DuolingoSkill extends ReactUtils {
             // lil pop-up at the beginning of practice lessons
             case "SKILL_PRACTICE_SPLASH":
                 // click START PRACTICE
+                this.current_challenge = new DuolingoChallenge();
+                this.current_challenge.click_start_practice();
                 break;
             // lil pop-up at the beginning of the practice that you start by clicking
             // the weight icon in the bottom left
             case "GLOBAL_PRACTICE_SPLASH":
+                this.current_challenge = new DuolingoChallenge();
+                this.current_challenge.click_start_practice();
                 break;
             // waiting for answer for this challenge
             case "GUESSING":
+                this.current_challenge = new DuolingoChallenge();
+                this.current_challenge.solve();
+                this.current_challenge.click_check();
+                this.current_challenge.click_continue();
                 break;
             // grading this challenge
             case "BLAMING":
@@ -53,12 +61,19 @@ export default class DuolingoSkill extends ReactUtils {
             // here just in case they fix it
             case "DOACH_DUO":
             case "COACH_DUO":
+                this.current_challenge = new DuolingoChallenge();
+                this.current_challenge.click_continue();
                 break;
             // just finished the lesson, loading results
             case "SUBMITTING":
                 break;
             // results are here!
             case "END_CAROUSEL":
+                this.current_challenge = new DuolingoChallenge();
+                this.current_challenge.click_continue();
+                this.current_challenge.click_continue();
+                this.current_challenge.click_continue();
+                clearInterval(this.state_machine);
                 break;
             default:
                 alert("UNKNOWN STATUS: " + status)

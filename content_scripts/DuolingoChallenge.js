@@ -22,12 +22,6 @@ export default class DuolingoChallenge extends ReactUtils {
     }
 
     solve = () => {
-        this.perform_solution();
-        this.click_check();
-        this.click_continue();
-    }
-
-    perform_solution = () => {
         switch (this.challenge_type) {
             case "character_match":
                 this.solve_character_match();
@@ -60,6 +54,7 @@ export default class DuolingoChallenge extends ReactUtils {
                 this.solve_select_pronunciation();
                 break;
             default:
+                alert("UNKNOWN CHALLENGE TYPE: " + this.challenge_type)
                 break;
         }
     }
@@ -104,42 +99,50 @@ export default class DuolingoChallenge extends ReactUtils {
     // fill in the blank
     solve_form = () => {
         let correct_index = this.challenge_node.correctIndex;
-        document.querySelectorAll("label[data-test='challenge-choice']")[correct_index].click()
+        this.choose_index("label[data-test='challenge-choice']", correct_index);
     }
     
     solve_character_select = () => {
         let correct_index = this.challenge_node.correctIndex;
-        document.querySelectorAll("label[data-test='challenge-choice-card']")[correct_index].click()
+        this.choose_index("label[data-test='challenge-choice-card']", correct_index);
     }
 
     // mark the correct meaning
     solve_judge = () => {
         let correct_index = this.challenge_node.correctIndices[0];
-        document.querySelectorAll("div[data-test='challenge-judge-text']")[correct_index].click()
+        this.choose_index("div[data-test='challenge-judge-text']", correct_index);
     }
 
     // what do you hear?
     solve_select_transcription = () => {
         let correct_index = this.challenge_node.correctIndex;
-        document.querySelectorAll("div[data-test='challenge-judge-text']")[correct_index].click()
+        this.choose_index("div[data-test='challenge-judge-text']", correct_index);
     }
 
     // what sound does this make?
     solve_character_intro = () => {
         let correct_index = this.challenge_node.correctIndex;
-        document.querySelectorAll("div[data-test='challenge-judge-text']")[correct_index].click()
+        this.choose_index("div[data-test='challenge-judge-text']", correct_index);
     }
 
     // which one of these is "_____"?
     solve_select = () => {
         let correct_index = this.challenge_node.correctIndex;
-        document.querySelectorAll("label[data-test='challenge-choice-card']")[correct_index].click()
+        this.choose_index("label[data-test='challenge-choice-card']", correct_index);
     }
 
     // what do you hear?
     solve_select_pronunciation = () => {
         let correct_index = this.challenge_node.correctIndex;
-        document.querySelectorAll("div[data-test='challenge-judge-text']")[correct_index].click()
+        this.choose_index("div[data-test='challenge-judge-text']", correct_index);
+    }
+
+    choose_index = (query_selector, correct_index) => {
+        let choices = document.querySelectorAll(query_selector);
+        if (correct_index >= choices.length) {
+            correct_index = choices.length - 1;
+        }
+        choices[correct_index].click()
     }
 
     click_check = () => {
@@ -148,6 +151,10 @@ export default class DuolingoChallenge extends ReactUtils {
 
     click_continue = () => {
         this.queue_click_player_next("CONTINUE");
+    }
+
+    click_start_practice = () => {
+        this.queue_click_player_next("START PRACTICE");
     }
 
     queue_click_player_next = (type) => {
