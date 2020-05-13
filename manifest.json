@@ -1,0 +1,37 @@
+{
+    "name": "Autolingo",
+    "version": "1.0",
+    "manifest_version": 2,
+    "description": "Automatically completes Duolingo lessons so you don't have to..",
+    "background": {
+        "page": "background.html"
+    },
+    "permissions": [
+        "idle",
+        "tabs",
+        "history",
+        "storage",
+        "notifications"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.duolingo.com/*"
+            ],
+            "js": [
+                "content_scripts/init.js"
+            ], 
+            "all_frames": true
+        }
+    ],
+    "icons": {
+        "427": "images/diamond-league.png"
+    },
+    "browser_action": {
+      "default_title": "Autolingo",
+      "default_popup": "popup.html"
+    },
+    "web_accessible_resources": [
+        "content_scripts/injected.js"
+    ]
+}
