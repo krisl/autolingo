@@ -1,0 +1,30 @@
+.start-autolingo-skill-container {
+    position: absolute;
+
+    right: 10px;
+    top: 10px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.start-autolingo-skill {
+    position: absolute;
+
+    width: 40px;
+    height: 40px;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+
+.start-autolingo-skill:hover {
+    transform: scale(1.2);
+}
+
+.start-autolingo-skill:active {
+    transform: scale(1.3);
+}
