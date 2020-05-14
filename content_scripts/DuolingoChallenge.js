@@ -53,9 +53,19 @@ export default class DuolingoChallenge extends ReactUtils {
             case "select_pronunciation":
                 this.solve_select_pronunciation();
                 break;
-            default:
-                alert("UNKNOWN CHALLENGE TYPE: " + this.challenge_type)
+            case "complete_reverse_translation":
+                this.solve_complete_reverse_translation();
                 break;
+            case "listen":
+                this.solve_listen_tap();
+                break;
+            case "name":
+                this.solve_name();
+                break;
+            default:
+                let error_string = "UNKNOWN CHALLENGE TYPE: " + this.challenge_type;
+                alert(error_string);
+                throw new Error(error_string);
         }
     }
 
@@ -73,6 +83,12 @@ export default class DuolingoChallenge extends ReactUtils {
     solve_listen_tap = () => {
         let translation = this.challenge_node.prompt;
         this.insert_translation(translation);
+    }
+
+    solve_name = () => {
+        let answer = this.challenge_node.correctSolutions[0];
+        let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
+        this.ReactInternal(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
     }
 
     // matching pairs
@@ -135,6 +151,13 @@ export default class DuolingoChallenge extends ReactUtils {
     solve_select_pronunciation = () => {
         let correct_index = this.challenge_node.correctIndex;
         this.choose_index("div[data-test='challenge-judge-text']", correct_index);
+    }
+
+    // complete the translation
+    solve_complete_reverse_translation = () => {
+        let answer = this.challenge_node.displayTokens.find(token => { return token.isBlank; }).text;
+        let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
+        this.ReactInternal(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
     }
 
     choose_index = (query_selector, correct_index) => {

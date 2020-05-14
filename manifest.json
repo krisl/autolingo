@@ -26,7 +26,7 @@
         }
     ],
     "icons": {
-        "427": "images/diamond-league.png"
+        "427": "images/icon.png"
     },
     "browser_action": {
       "default_title": "Autolingo",
@@ -38,6 +38,17 @@
         "content_scripts/DuolingoChallenge.js",
         "content_scripts/DuolingoSkill.js",
         "content_scripts/main.css",
+
+        "images/icon.png",
+        "images/bronze-league.png",
+        "images/silver-league.png",
+        "images/gold-league.png",
+        "images/sapphire-league.png",
+        "images/ruby-league.png",
+        "images/emerald-league.png",
+        "images/amethyst-league.png",
+        "images/pearl-league.png",
+        "images/obsidian-league.png",
         "images/diamond-league.png"
     ]
 }

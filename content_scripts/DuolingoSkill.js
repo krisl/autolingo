@@ -43,7 +43,11 @@ export default class DuolingoSkill extends ReactUtils {
             // waiting for answer for this challenge
             case "GUESSING":
                 this.current_challenge = new DuolingoChallenge();
-                this.current_challenge.solve();
+                try {
+                    this.current_challenge.solve();
+                } catch {
+                    clearInterval(this.state_machine);
+                }
                 this.current_challenge.click_check();
                 this.current_challenge.click_continue();
                 break;
