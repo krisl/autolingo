@@ -6,19 +6,24 @@ export default class DuolingoChallenge extends ReactUtils {
 
         this.challenge_node = this.get_current_challenge();
 
-        this.learning_language = this.challenge_node.metadata.learning_language;
-        this.source_language = this.challenge_node.metadata.from_language;
-        this.target_language = this.challenge_node.metadata.source_language;
+        if (this.challenge_node) {
+            this.learning_language = this.challenge_node.metadata.learning_language;
+            this.source_language = this.challenge_node.metadata.from_language;
+            this.target_language = this.challenge_node.metadata.source_language;
 
-        this.challenge_type = this.challenge_node.metadata.type;
-        this.challenge_id = this.challenge_node.metadata.uuid;
+            this.challenge_type = this.challenge_node.metadata.type;
+            this.challenge_id = this.challenge_node.metadata.uuid;
 
-        this.click_next_queue = [];
-        this.active_click_next = undefined;
+            this.click_next_count = 0;
+            this.active_click_next = undefined;
+        }
     }
 
     get_current_challenge = () => {
-        return this.ReactInternal(document.getElementsByClassName("_2vedk")[0]).return.return.stateNode.props.currentChallenge
+        const challenge_elem = this.ReactInternal(document.getElementsByClassName("_2vedk")[0]);
+        if (challenge_elem) {
+            return challenge_elem.return.return.stateNode.props.currentChallenge;
+        }
     }
 
     solve = () => {
@@ -168,54 +173,39 @@ export default class DuolingoChallenge extends ReactUtils {
         choices[correct_index].click()
     }
 
-    click_check = () => {
-        this.queue_click_player_next("CHECK");
-    }
+    click_next = () => {
+        // increase the count
+        this.click_next_count++;
 
-    click_continue = () => {
-        this.queue_click_player_next("CONTINUE");
-    }
-
-    click_start_practice = () => {
-        this.queue_click_player_next("START PRACTICE");
-    }
-
-    queue_click_player_next = (type) => {
-        // if we're already handling a command, then push it onto the queue
-        if (this.active_click_next) {
-            this.click_next_queue.push(type);
-        }
-
-        // else handle this command
-        else {
-            this.click_player_next(type);
-            this.active_click_next = type;
+        // if we're not handling a click-next, handle this one!
+        if (!this.active_click_next) {
+            this.set_click_next_interval();
+            this.active_click_next = true;
         }
     }
 
-    click_player_next = (type) => {
+    set_click_next_interval = () => {
         // keep trying to click the 'next' button until something happens
         let click_next_interval = setInterval(() => {
+            console.log('trying to click next...')
             let player_next_button = document.querySelector("button[data-test='player-next']")
-            if (player_next_button) {
-                // the text of the button, values can be "CHECK" or "CONTINUE"
-                let button_state = player_next_button.innerText;
-                
-                // if our button is still in the original state, try to click again
-                if (button_state === type) {
-                    player_next_button.click();
-                }
 
-                // else we made it change!
-                else {
-                    clearInterval(click_next_interval);
+            // if we can click the button...
+            if (player_next_button && !player_next_button.disabled) {
 
-                    // if we have more on the queue, start the next one!
-                    if (this.click_next_queue.length > 0) {
-                        let next_click = this.click_next_queue.shift();
-                        this.active_click_next = next_click;
-                        this.click_player_next(next_click);
-                    }
+                // click it! and decrease the count
+                player_next_button.click();
+                this.click_next_count--;
+
+                // stop checking to click for THIS button
+                clearInterval(click_next_interval);
+
+                // if we have more to click, start the next one!
+                if (this.click_next_count > 0) {
+                    this.active_click_next = true;
+                    this.set_click_next_interval();
+                } else {
+                    this.active_click_next = false;
                 }
             }
         }, 1)

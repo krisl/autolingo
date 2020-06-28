@@ -26,19 +26,31 @@ div#toggle-enabled-text {
     border-left: 20px solid transparent;
 }
 
-.enabled-button-container {
+.slider-container {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
+}
+
+.content-row {
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
 
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
     border-top: 20px solid transparent;
     border-bottom: 20px solid transparent;
-}
 
-.content {
     background: #fafafa;
 }
 
@@ -133,4 +145,8 @@ input:checked + .autolingo-slider:before {
 	font: inherit;
 	cursor: pointer;
 	outline: inherit;
+}
+
+.complete-challenge-container {
+    
 }

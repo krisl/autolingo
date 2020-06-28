@@ -32,13 +32,13 @@ export default class DuolingoSkill extends ReactUtils {
             case "SKILL_PRACTICE_SPLASH":
                 // click START PRACTICE
                 this.current_challenge = new DuolingoChallenge();
-                this.current_challenge.click_start_practice();
+                this.current_challenge.click_next();
                 break;
             // lil pop-up at the beginning of the practice that you start by clicking
             // the weight icon in the bottom left
             case "GLOBAL_PRACTICE_SPLASH":
                 this.current_challenge = new DuolingoChallenge();
-                this.current_challenge.click_start_practice();
+                this.current_challenge.click_next();
                 break;
             // waiting for answer for this challenge
             case "GUESSING":
@@ -48,8 +48,8 @@ export default class DuolingoSkill extends ReactUtils {
                 } catch {
                     clearInterval(this.state_machine);
                 }
-                this.current_challenge.click_check();
-                this.current_challenge.click_continue();
+                this.current_challenge.click_next();
+                this.current_challenge.click_next();
                 break;
             // grading this challenge
             case "BLAMING":
@@ -66,7 +66,7 @@ export default class DuolingoSkill extends ReactUtils {
             case "DOACH_DUO":
             case "COACH_DUO":
                 this.current_challenge = new DuolingoChallenge();
-                this.current_challenge.click_continue();
+                this.current_challenge.click_next();
                 break;
             // just finished the lesson, loading results
             case "SUBMITTING":
@@ -74,9 +74,9 @@ export default class DuolingoSkill extends ReactUtils {
             // results are here!
             case "END_CAROUSEL":
                 this.current_challenge = new DuolingoChallenge();
-                this.current_challenge.click_continue();
-                this.current_challenge.click_continue();
-                this.current_challenge.click_continue();
+                this.current_challenge.click_next();
+                this.current_challenge.click_next();
+                this.current_challenge.click_next();
                 clearInterval(this.state_machine);
                 break;
             default:

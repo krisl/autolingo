@@ -1,5 +1,11 @@
 import ReactUtils from "./ReactUtils.js"
 import DuolingoSkill from "./DuolingoSkill.js"
+import DuolingoChallenge from "./DuolingoChallenge.js"
+
+// RE-ENABLE LOGGING TO CONSOLE
+const frame = document.createElement('iframe');
+document.body.appendChild(frame);
+console = frame.contentWindow.console;
 
 // these logs don't work for some reason :(
 console.log("Welcome to Autolingo v1.0!")
@@ -26,13 +32,38 @@ stylesheet.onload = () => {
     setInterval(inject_autolingo, 50);
 }
 
+document.addEventListener("complete_challenge", () => {
+    const challenge = new DuolingoChallenge();
+    challenge.solve();
+    challenge.click_next();
+    challenge.click_next();
+});
+
+
+// VALUES PULLED FROM THE POPUP
+window.autolingo_store = {
+    autocomplete_matching: false,
+};
+document.addEventListener("autocomplete_matching", e => {
+    window.autolingo_store.autocomplete_matching = e.detail.data;
+});
+
+setInterval(() => {
+    if (window.autolingo_store.autocomplete_matching === false) {
+        const challenge = new DuolingoChallenge();
+        if (challenge.challenge_type === "character_match") {
+            challenge.solve();
+        }
+    }
+}, 100);
+
 const get_current_tier = () => {
     const league_state_node = document.getElementsByClassName("_1NIUo COg1x")[0];
     if (!league_state_node) {
         return;
     }
-    const leageu_state = new ReactUtils().ReactInternal(league_state_node).return.return.return.return.stateNode.props.leagueState;
-    return leageu_state.tier;
+    const league_state = new ReactUtils().ReactInternal(league_state_node).return.return.return.return.stateNode.props.leagueState;
+    return league_state.tier;
 }
 
 const tier_img_map = {
@@ -58,36 +89,41 @@ const inject_autolingo = () => {
         let all_skill_nodes = document.querySelectorAll("div[data-test='skill']");
         all_skill_nodes.forEach(skill_node => {
 
-            // add start skill button with tooltip to a container DIV
-            let start_autolingo_skill_container = document.createElement("DIV");
-            start_autolingo_skill_container.className = "start-autolingo-skill-container";
+            // only add these buttons to unlocked lessons
+            const unlocked = new ReactUtils().ReactInternal(skill_node).return.stateNode.props.skill.accessible;
+            if (unlocked) {
 
-            let start_autolingo_skill_tooltip = document.createElement("DIV");
-            start_autolingo_skill_tooltip.className = "tooltip";
+                // add start skill button with tooltip to a container DIV
+                let start_autolingo_skill_container = document.createElement("DIV");
+                start_autolingo_skill_container.className = "start-autolingo-skill-container";
 
-            // append a lil button to each skill
-            // when clicked, this button starts an auto-lesson
-            let start_autolingo_skill = document.createElement("IMG");
-            start_autolingo_skill.src = tier_img_url;
-            start_autolingo_skill.className = "start-autolingo-skill";
+                let start_autolingo_skill_tooltip = document.createElement("DIV");
+                start_autolingo_skill_tooltip.className = "tooltip";
 
-            // on click, start the lesson and let the extension know it's time to autocomplete
-            start_autolingo_skill.onclick = () => {
-                let ds = new DuolingoSkill(skill_node);
-                ds.start();
+                // append a lil button to each skill
+                // when clicked, this button starts an auto-lesson
+                let start_autolingo_skill = document.createElement("IMG");
+                start_autolingo_skill.src = tier_img_url;
+                start_autolingo_skill.className = "start-autolingo-skill";
+
+                // on click, start the lesson and let the extension know it's time to autocomplete
+                start_autolingo_skill.onclick = () => {
+                    let ds = new DuolingoSkill(skill_node);
+                    ds.start();
+                }
+
+                // append a lil button to each skill
+                // when clicked, this button starts an auto-lesson
+                let start_autolingo_tooltip_text = document.createElement("SPAN");
+                start_autolingo_tooltip_text.innerText = "Autocomplete lesson with AutoLingo.";
+                start_autolingo_tooltip_text.className = "tooltip-text";
+
+                // append nodes to eachother
+                start_autolingo_skill_tooltip.appendChild(start_autolingo_tooltip_text);
+                start_autolingo_skill_tooltip.appendChild(start_autolingo_skill);
+                start_autolingo_skill_container.appendChild(start_autolingo_skill_tooltip);
+                skill_node.appendChild(start_autolingo_skill_container);
             }
-
-            // append a lil button to each skill
-            // when clicked, this button starts an auto-lesson
-            let start_autolingo_tooltip_text = document.createElement("SPAN");
-            start_autolingo_tooltip_text.innerText = "Autocomplete lesson with AutoLingo.";
-            start_autolingo_tooltip_text.className = "tooltip-text";
-
-            // append nodes to eachother
-            start_autolingo_skill_tooltip.appendChild(start_autolingo_tooltip_text);
-            start_autolingo_skill_tooltip.appendChild(start_autolingo_skill);
-            start_autolingo_skill_container.appendChild(start_autolingo_skill_tooltip);
-            skill_node.appendChild(start_autolingo_skill_container);
         });
     }
 }

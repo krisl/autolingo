@@ -11,6 +11,12 @@ injectScript = (fileName) => {
     th.appendChild(s);
 }
 
+const send_custom_event = (event_name, data=null) => {
+    var event = document.createEvent("CustomEvent")
+    event.initCustomEvent(event_name, true, true, {"data": data});
+    document.dispatchEvent(event);
+}
+
 // only inject our script if the extension is enabled
 chrome.storage.local.get(
     "autolingo_enabled",
@@ -21,6 +27,20 @@ chrome.storage.local.get(
             // so it can access the properties of web elements that we need.
             // idk why you have to inject it for this but you do
             injectScript("content_scripts/injected.js")
+
+            // add a listener that forwards messages to the injected script
+            chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+                switch (message.action) {
+                    case "complete_challenge":
+                        send_custom_event("complete_challenge");
+                        break;
+                    case "autocomplete_matching":
+                        send_custom_event("autocomplete_matching", message.data);
+                        break;
+                    default:
+                        console.error(`Given unknown message type '${message.action}'`);
+                }
+            });
         }
     }
 );
