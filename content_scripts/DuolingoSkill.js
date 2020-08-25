@@ -1,6 +1,8 @@
 import DuolingoChallenge from "./DuolingoChallenge.js"
 import ReactUtils from "./ReactUtils.js"
 
+// whether or not to log debug messages
+const DEBUG = true;
 
 export default class DuolingoSkill extends ReactUtils {
     constructor (skill_node) {
@@ -17,12 +19,31 @@ export default class DuolingoSkill extends ReactUtils {
         this.state_machine = setInterval(this.complete_challenge, 10);
     }
 
-    complete_challenge = () => {
-        const status_node = document.getElementsByClassName("ZwSRm _1qXYl")[0];
-        if (!status_node) { return; }
+    end () {
+        clearInterval(this.state_machine);
+        this.current_challenge.end();
+        if (DEBUG) {
+            console.log("Lesson complete, stopping the autocompleter!");
+        }
+    }
 
-        const status = this.ReactInternal(status_node).return.return.stateNode.props.status
-        // throw new Error(status)
+    complete_challenge = () => {
+        // if you're on the home page, stop trying to complete the skill
+        if (window.location.href.includes("duolingo.com/learn")) {
+            this.end();
+            return;
+        }
+
+        // else try to find the status and act accordingly
+        const status_node = document.getElementsByClassName("mQ0GW")[0];
+        if (!status_node) {
+            if (DEBUG) {
+                console.log("can't find status node!");
+            }
+            return;
+        }
+
+        const status = this.ReactInternal(status_node).return.return.stateNode.props.player.status;
 
         switch (status) {
             // loading this lesson
@@ -46,7 +67,7 @@ export default class DuolingoSkill extends ReactUtils {
                 try {
                     this.current_challenge.solve();
                 } catch {
-                    clearInterval(this.state_machine);
+                    this.end();
                 }
                 this.current_challenge.click_next();
                 this.current_challenge.click_next();
@@ -59,12 +80,14 @@ export default class DuolingoSkill extends ReactUtils {
                 break;
             // loading coach duo to give advice
             case "COACH_DUO_SLIDING":
+            case "HARD_MODE_DUO_SLIDING":
                 break;
             // waiting to hit CONTINUE for coach duo's advice
             // NOTE it's called "DOACH_DUO" but i think it's a typo so i put an extra case
             // here just in case they fix it
             case "DOACH_DUO":
             case "COACH_DUO":
+            case "HARD_MODE_DUO":
                 this.current_challenge = new DuolingoChallenge();
                 this.current_challenge.click_next();
                 break;
@@ -77,10 +100,10 @@ export default class DuolingoSkill extends ReactUtils {
                 this.current_challenge.click_next();
                 this.current_challenge.click_next();
                 this.current_challenge.click_next();
-                clearInterval(this.state_machine);
                 break;
             default:
-                alert("UNKNOWN STATUS: " + status)
+                alert("UNKNOWN STATUS: " + status);
+                this.end();
                 break;
         }
     }

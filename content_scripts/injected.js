@@ -49,7 +49,7 @@ document.addEventListener("autocomplete_matching", e => {
 });
 
 setInterval(() => {
-    if (window.autolingo_store.autocomplete_matching === false) {
+    if (window.autolingo_store.autocomplete_matching === true) {
         const challenge = new DuolingoChallenge();
         if (challenge.challenge_type === "character_match") {
             challenge.solve();
@@ -57,29 +57,31 @@ setInterval(() => {
     }
 }, 100);
 
-const get_current_tier = () => {
-    const league_state_node = document.getElementsByClassName("_1NIUo COg1x")[0];
-    if (!league_state_node) {
-        return;
-    }
-    const league_state = new ReactUtils().ReactInternal(league_state_node).return.return.return.return.stateNode.props.leagueState;
-    return league_state.tier;
-}
+// const get_current_tier = () => {
+//     const league_state_node = document.getElementsByClassName("_1NIUo COg1x")[0]; // TODO this line is broken
+//     if (!league_state_node) {
+//         return;
+//     }
+//     const league_state = new ReactUtils().ReactInternal(league_state_node).return.return.return.return.stateNode.props.leagueState;
+//     return league_state.tier;
+// }
 
-const tier_img_map = {
-    0: "images/bronze-league.png",
-    1: "images/silver-league.png",
-    2: "images/gold-league.png",
-    3: "images/sapphire-league.png",
-    4: "images/ruby-league.png",
-    5: "images/emerald-league.png",
-    6: "images/amethyst-league.png",
-    7: "images/pearl-league.png",
-    8: "images/obsidian-league.png",
-    9: "images/diamond-league.png"
-}
+// const tier_img_map = {
+//     0: "images/bronze-league.png",
+//     1: "images/silver-league.png",
+//     2: "images/gold-league.png",
+//     3: "images/sapphire-league.png",
+//     4: "images/ruby-league.png",
+//     5: "images/emerald-league.png",
+//     6: "images/amethyst-league.png",
+//     7: "images/pearl-league.png",
+//     8: "images/obsidian-league.png",
+//     9: "images/diamond-league.png"
+// }
 
-const tier_img_url = `${extension_prefix}/${tier_img_map[get_current_tier()]}`
+// const tier_img_url = `${extension_prefix}/${tier_img_map[get_current_tier()]}`
+
+const tier_img_url = `${extension_prefix}/images/diamond-league.png`
 
 const inject_autolingo = () => {
     if (url_changed && window.location.href === "https://www.duolingo.com/learn") {
@@ -112,8 +114,7 @@ const inject_autolingo = () => {
                     ds.start();
                 }
 
-                // append a lil button to each skill
-                // when clicked, this button starts an auto-lesson
+                // show tooltip when hovering over the auto-lesson buttons
                 let start_autolingo_tooltip_text = document.createElement("SPAN");
                 start_autolingo_tooltip_text.innerText = "Autocomplete lesson with AutoLingo.";
                 start_autolingo_tooltip_text.className = "tooltip-text";

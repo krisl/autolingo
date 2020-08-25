@@ -20,7 +20,7 @@ export default class DuolingoChallenge extends ReactUtils {
     }
 
     get_current_challenge = () => {
-        const challenge_elem = this.ReactInternal(document.getElementsByClassName("_2vedk")[0]);
+        const challenge_elem = this.ReactInternal(document.getElementsByClassName("mQ0GW")[0]);
         if (challenge_elem) {
             return challenge_elem.return.return.stateNode.props.currentChallenge;
         }
@@ -186,8 +186,8 @@ export default class DuolingoChallenge extends ReactUtils {
 
     set_click_next_interval = () => {
         // keep trying to click the 'next' button until something happens
-        let click_next_interval = setInterval(() => {
-            console.log('trying to click next...')
+        this.click_next_interval = setInterval(() => {
+            // console.log('trying to click next...')
             let player_next_button = document.querySelector("button[data-test='player-next']")
 
             // if we can click the button...
@@ -198,7 +198,7 @@ export default class DuolingoChallenge extends ReactUtils {
                 this.click_next_count--;
 
                 // stop checking to click for THIS button
-                clearInterval(click_next_interval);
+                clearInterval(this.click_next_interval);
 
                 // if we have more to click, start the next one!
                 if (this.click_next_count > 0) {
@@ -209,5 +209,12 @@ export default class DuolingoChallenge extends ReactUtils {
                 }
             }
         }, 1)
+    }
+
+    // clean-up: end the active intervals
+    end () {
+        if (this.click_next_interval) {
+            clearInterval(this.click_next_interval);
+        }
     }
 }
