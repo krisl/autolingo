@@ -1,10 +1,11 @@
-CTRL+SHIFT+D = complete the current challenge
+~~ TODO LIST ~~
 
-in the top right of each lesson, add a button. when clicked, this button causes the lesson to be opened and fully auto-completed
+-----------------
+-- INJECTED.js --
+-----------------
+[ ] Add shortcut for completing the current challenge (CTRL+SHIFT+D)?
 
------------
--- POPUP --
------------
-
-Enabled/Disabled for determining if the extension runs at all
-Synopsis of your current XP or rank in the league or whatever
+--------------
+-- POPUP.js --
+--------------
+[ ] Synopsis of your current XP or rank in the league or whatever
