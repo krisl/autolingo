@@ -3,7 +3,7 @@
     "version": "1.0",
     "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApISNC0CT4u4juJKfI1advpZICXlphx38mW++8LEAFskuJYORvvlf5nz+bP89v9ffwom05PVNwBCXiNJmdPjZYv0ukBtS47VYjzNJoX5ONuEodeIyUxVvhv6dc2IijmMzDhcOc8DHqjVwgmvvV8x4M/M2S5VVgWf3pAYF8OOQggAibSvjhtzFXHbcxGjgR2smWrOjapsgHXk/LR7oOK4vcYdeu6Dw4CwvN4d9WY0us2OQ4taw7X4kkATRZY5GUHnU2rMQZEE4YOD5E9MNQmsL1M1haXkmeVEN8wMBH/Kju9I1xlFHlr8EWYTZ98lJOT1ujFq1QIbMqFpZF1tztWL9FQIDAQAB",
     "manifest_version": 2,
-    "description": "Automatically completes Duolingo lessons so you don't have to..",
+    "description": "Automatically completes Duolingo lessons so you don't have to!",
     "background": {
         "page": "background.html"
     },
