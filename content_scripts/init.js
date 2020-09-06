@@ -34,9 +34,6 @@ chrome.storage.local.get(
                     case "complete_challenge":
                         send_custom_event("complete_challenge");
                         break;
-                    case "autocomplete_matching":
-                        send_custom_event("autocomplete_matching", message.data);
-                        break;
                     default:
                         console.error(`Given unknown message type '${message.action}'`);
                 }

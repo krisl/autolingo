@@ -40,15 +40,6 @@
         "content_scripts/main.css",
 
         "images/icon.png",
-        "images/bronze-league.png",
-        "images/silver-league.png",
-        "images/gold-league.png",
-        "images/sapphire-league.png",
-        "images/ruby-league.png",
-        "images/emerald-league.png",
-        "images/amethyst-league.png",
-        "images/pearl-league.png",
-        "images/obsidian-league.png",
         "images/diamond-league.png"
     ]
 }

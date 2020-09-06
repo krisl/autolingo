@@ -5,10 +5,14 @@ import DuolingoChallenge from "./DuolingoChallenge.js"
 // RE-ENABLE LOGGING TO CONSOLE
 const frame = document.createElement('iframe');
 document.body.appendChild(frame);
-console = frame.contentWindow.console;
+const log = (content) => {
+    frame.contentWindow.console.log(content);
+}
 
-// these logs don't work for some reason :(
-console.log("Welcome to Autolingo v1.0!")
+// this restores ALL functionality to the console
+// console = frame.contentWindow.console;
+
+log("Welcome to Autolingo v1.0!")
 
 // re-inject the code whenever the url changes back to duolingo.com/learn
 let current_location = window.location.href;
@@ -38,48 +42,6 @@ document.addEventListener("complete_challenge", () => {
     challenge.click_next();
     challenge.click_next();
 });
-
-
-// VALUES PULLED FROM THE POPUP
-window.autolingo_store = {
-    autocomplete_matching: false,
-};
-document.addEventListener("autocomplete_matching", e => {
-    window.autolingo_store.autocomplete_matching = e.detail.data;
-});
-
-setInterval(() => {
-    if (window.autolingo_store.autocomplete_matching === true) {
-        const challenge = new DuolingoChallenge();
-        if (challenge.challenge_type === "character_match") {
-            challenge.solve();
-        }
-    }
-}, 100);
-
-// const get_current_tier = () => {
-//     const league_state_node = document.getElementsByClassName("_1NIUo COg1x")[0]; // TODO this line is broken
-//     if (!league_state_node) {
-//         return;
-//     }
-//     const league_state = new ReactUtils().ReactInternal(league_state_node).return.return.return.return.stateNode.props.leagueState;
-//     return league_state.tier;
-// }
-
-// const tier_img_map = {
-//     0: "images/bronze-league.png",
-//     1: "images/silver-league.png",
-//     2: "images/gold-league.png",
-//     3: "images/sapphire-league.png",
-//     4: "images/ruby-league.png",
-//     5: "images/emerald-league.png",
-//     6: "images/amethyst-league.png",
-//     7: "images/pearl-league.png",
-//     8: "images/obsidian-league.png",
-//     9: "images/diamond-league.png"
-// }
-
-// const tier_img_url = `${extension_prefix}/${tier_img_map[get_current_tier()]}`
 
 const tier_img_url = `${extension_prefix}/images/diamond-league.png`
 
