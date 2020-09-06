@@ -89,8 +89,25 @@ const inject = (extension_id) => {
                     skill_node.appendChild(start_autolingo_skill_container);
                 }
             });
+
+            // add our custom hotkeys
+            set_hotkeys();
         }
     }
+}
+
+const set_hotkeys = () => {
+    document.addEventListener("keydown", e => {
+
+        // ALT+S to skip the current challenge
+        if (e.key === "s" && e.altKey) {
+            const skip_challenge_button = document.querySelector("button[data-test='player-skip']");
+            if (skip_challenge_button) {
+                skip_challenge_button.click();
+            }
+        }
+
+    });
 }
 
 // get chrome extension's ID
