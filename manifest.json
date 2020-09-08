@@ -22,7 +22,12 @@
         }
     ],
     "icons": {
-        "427": "images/icon.png"
+        "16": "images/icon-16.png",
+        "32": "images/icon-32.png",
+        "48": "images/icon-48.png",
+        "60": "images/icon-60.png",
+        "128": "images/icon-128.png",
+        "256": "images/icon-256.png"
     },
     "browser_action": {
       "default_title": "Autolingo",
@@ -35,7 +40,6 @@
         "content_scripts/DuolingoSkill.js",
         "content_scripts/main.css",
 
-        "images/icon.png",
         "images/diamond-league.png"
     ]
 }
