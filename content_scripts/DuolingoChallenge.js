@@ -4,9 +4,24 @@ export default class DuolingoChallenge extends ReactUtils {
     constructor() {
         super();
 
-        this.challenge_node = this.get_current_challenge();
+        // get the react internals for the current lesson
+        this.challenge_internals = this.get_challenge_internals();
 
-        if (this.challenge_node) {
+        // make sure the keyboard is enabled so we can paste in the input box
+        if (!this.challenge_internals.browserSettings.typingEnabled) {
+            const enable_typing_node = Array.from(document.querySelectorAll("div")).find(e => {
+                return e.innerHTML.toLowerCase() === "use keyboard"
+            });
+
+            if (enable_typing_node) {
+                enable_typing_node.click();
+            }
+        }
+
+        // get the react internals for the current challenge
+        this.challenge_node = this.challenge_internals.currentChallenge;
+
+        if (this.challenge_internals && this.challenge_node) {
             this.learning_language = this.challenge_node.metadata.learning_language;
             this.source_language = this.challenge_node.metadata.from_language;
             this.target_language = this.challenge_node.metadata.source_language;
@@ -19,10 +34,10 @@ export default class DuolingoChallenge extends ReactUtils {
         }
     }
 
-    get_current_challenge = () => {
+    get_challenge_internals = () => {
         const challenge_elem = this.ReactInternal(document.getElementsByClassName("mQ0GW")[0]);
         if (challenge_elem) {
-            return challenge_elem.return.return.stateNode.props.currentChallenge;
+            return challenge_elem.return.return.stateNode.props;
         }
     }
 
@@ -68,7 +83,7 @@ export default class DuolingoChallenge extends ReactUtils {
                 this.solve_name();
                 break;
             default:
-                let error_string = "UNKNOWN CHALLENGE TYPE: " + this.challenge_type;
+                let error_string = `AUTOLINGO - UNKNOWN CHALLENGE TYPE: ${this.challenge_type}`;
                 alert(error_string);
                 throw new Error(error_string);
         }
