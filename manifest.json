@@ -13,7 +13,7 @@
     "content_scripts": [
         {
             "matches": [
-                "https://*.duolingo.com/*"
+                "*://*.duolingo.com/*"
             ],
             "js": [
                 "content_scripts/init.js"

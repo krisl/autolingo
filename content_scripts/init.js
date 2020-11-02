@@ -1,5 +1,5 @@
 // // function for injecting a file as a script so we can use it
-injectScript = (fileName) => {
+const injectScript = (fileName) => {
     // append the content script as a script element to the page
     // so that it has proper permissions to modify video elements
     let th = document.getElementsByTagName('body')[0];
