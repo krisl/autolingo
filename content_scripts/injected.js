@@ -54,8 +54,14 @@ const inject = (extension_id) => {
             let all_skill_nodes = document.querySelectorAll("div[data-test='skill']");
             all_skill_nodes.forEach(skill_node => {
 
+                // find the name of each skill node
+                const skill_name_node = skill_node.children[0].children[0].children[1];
+
+                // get skill metadata
+                const skill_metadata = new ReactUtils().ReactInternal(skill_name_node).return.pendingProps.skill;
+
                 // only add these buttons to unlocked lessons
-                const unlocked = new ReactUtils().ReactInternal(skill_node).return.stateNode.props.skill.accessible;
+                const unlocked = skill_metadata.accessible;
                 if (unlocked) {
 
                     // add start skill button with tooltip to a container DIV
@@ -73,7 +79,7 @@ const inject = (extension_id) => {
 
                     // on click, start the lesson and let the extension know it's time to autocomplete
                     start_autolingo_skill.onclick = () => {
-                        let ds = new DuolingoSkill(skill_node);
+                        let ds = new DuolingoSkill(skill_node, skill_metadata);
                         ds.start();
                     }
 

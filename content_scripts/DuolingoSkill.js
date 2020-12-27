@@ -5,11 +5,11 @@ import ReactUtils from "./ReactUtils.js"
 const DEBUG = true;
 
 export default class DuolingoSkill extends ReactUtils {
-    constructor (skill_node) {
+    constructor (skill_node, skill_metadata) {
         super();
 
         this.skill_node = skill_node;
-        this.skill_metadata = this.ReactInternal(skill_node).return.stateNode.props.skill;
+        this.skill_metadata = skill_metadata;
     }
 
     start = () => {
