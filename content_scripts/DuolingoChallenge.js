@@ -35,7 +35,7 @@ export default class DuolingoChallenge extends ReactUtils {
     }
 
     get_challenge_internals = () => {
-        const challenge_elem = this.ReactInternal(document.getElementsByClassName("mQ0GW")[0]);
+        const challenge_elem = this.ReactFiber(document.getElementsByClassName("mQ0GW")[0]);
         if (challenge_elem) {
             return challenge_elem.return.return.stateNode.props;
         }
@@ -91,7 +91,7 @@ export default class DuolingoChallenge extends ReactUtils {
 
     insert_translation = (translation) => {
         let challenge_translate_input = document.querySelector("textarea[data-test='challenge-translate-input']");
-        this.ReactInternal(challenge_translate_input).return.return.stateNode.props.onChange(null, translation)
+        this.ReactFiber(challenge_translate_input).return.return.stateNode.props.onChange(null, translation)
     }
 
     // target to source AND source to target translations
@@ -108,7 +108,7 @@ export default class DuolingoChallenge extends ReactUtils {
     solve_name = () => {
         let answer = this.challenge_node.correctSolutions[0];
         let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
-        this.ReactInternal(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
+        this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
     }
 
     // matching pairs
@@ -177,7 +177,7 @@ export default class DuolingoChallenge extends ReactUtils {
     solve_complete_reverse_translation = () => {
         let answer = this.challenge_node.displayTokens.find(token => { return token.isBlank; }).text;
         let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
-        this.ReactInternal(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
+        this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
     }
 
     choose_index = (query_selector, correct_index) => {

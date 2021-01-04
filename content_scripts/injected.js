@@ -58,7 +58,7 @@ const inject = (extension_id) => {
                 const skill_name_node = skill_node.children[0].children[0].children[1];
 
                 // get skill metadata
-                const skill_metadata = new ReactUtils().ReactInternal(skill_name_node).return.pendingProps.skill;
+                const skill_metadata = new ReactUtils().ReactFiber(skill_name_node).return.pendingProps.skill;
 
                 // only add these buttons to unlocked lessons
                 const unlocked = skill_metadata.accessible;

@@ -43,7 +43,7 @@ export default class DuolingoSkill extends ReactUtils {
             return;
         }
 
-        const status = this.ReactInternal(status_node).return.return.stateNode.props.player.status;
+        const status = this.ReactFiber(status_node).return.return.stateNode.props.player.status;
 
         switch (status) {
             // loading this lesson
