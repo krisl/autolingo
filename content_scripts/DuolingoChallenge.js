@@ -82,6 +82,32 @@ export default class DuolingoChallenge extends ReactUtils {
             case "name":
                 this.solve_name();
                 break;
+            case "gap_fill":
+                this.solve_form();
+                break;
+            case "tap_complete_table":
+                this.solve_tap_complete_table();
+                break;
+            case "type_complete_table":
+                this.solve_type_complete_table();
+                break;
+            case "type_cloze_table":
+                this.solve_type_complete_table();
+                break;
+            case "type_cloze":
+                this.solve_type_complete_table();
+                break;
+            case "tap_cloze_table":
+                this.solve_tap_cloze_table();
+            case "tap_cloze":
+                this.solve_tap_cloze();
+                break;
+            case "tap_complete":
+                this.solve_tap_compelete();
+                break;
+            case "read_comprehension":
+                this.solve_form();
+                break;
             default:
                 let error_string = `AUTOLINGO - UNKNOWN CHALLENGE TYPE: ${this.challenge_type}`;
                 alert(error_string);
@@ -109,6 +135,76 @@ export default class DuolingoChallenge extends ReactUtils {
         let answer = this.challenge_node.correctSolutions[0];
         let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
         this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
+    }
+
+    // fill in the blanks (in the table)
+    solve_tap_complete_table = () => {
+        const tokens = this.challenge_node.displayTableTokens;
+
+        // get the nodes for all the options
+        const tap_token_nodes = document.querySelectorAll("button[data-test='challenge-tap-token']");
+
+        // build a map from the text content to the node
+        let tap_tokens = {};
+        Array.from(tap_token_nodes).forEach(tap_token_node => {
+            let content = tap_token_node.childNodes[0].textContent;
+            tap_tokens[content] = tap_token_node;
+        });
+
+        // for each cell in the table, see if there is a matching choice for the right answer
+        // if there is, then click on that choice
+        // this will ensure that we've clicked the answers in the right order
+        tokens.forEach(row => {
+            row.forEach(cell => {
+                cell = cell[0];
+                if (cell.isBlank) {
+                    const matching_choice = tap_tokens[cell.text];
+                    if (matching_choice) {
+                        matching_choice.click();
+                    }
+                }
+            });
+        });
+    }
+
+    solve_type_complete_table = () => {
+        const blank_inputs = document.querySelectorAll("input[type=text]");
+        blank_inputs.forEach(input => {
+            const fiber = this.ReactFiber(input);
+            const answer_token = fiber.return.return.return.return.pendingProps;
+            const answer = answer_token.fullText.substring(answer_token.damageStart);
+            fiber.pendingProps.onChange({"target": {"value": answer}});
+        });
+    }
+
+    solve_tap_cloze_table = () => {
+        const tokens = this.challenge_node.displayTableTokens;
+
+        // get the nodes for all the options
+        const tap_token_nodes = document.querySelectorAll("button[data-test='challenge-tap-token']");
+
+        // build a map from the text content to the node
+        let tap_tokens = {};
+        Array.from(tap_token_nodes).forEach(tap_token_node => {
+            let content = tap_token_node.childNodes[0].textContent;
+            tap_tokens[content] = tap_token_node;
+        });
+
+        // for each cell in the table, see if there is a matching choice for the right answer
+        // if there is, then click on that choice
+        // this will ensure that we've clicked the answers in the right order
+        tokens.forEach(row => {
+            row.forEach(cell => {
+                cell = cell[0];                
+                if (cell.damageStart !== undefined) {
+                    const answer = cell.text.substring(cell.damageStart);
+                    const matching_choice = tap_tokens[answer];
+                    if (matching_choice) {
+                        matching_choice.click();
+                    }
+                }
+            });
+        });
     }
 
     // matching pairs
@@ -175,9 +271,58 @@ export default class DuolingoChallenge extends ReactUtils {
 
     // complete the translation
     solve_complete_reverse_translation = () => {
-        let answer = this.challenge_node.displayTokens.find(token => { return token.isBlank; }).text;
-        let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
-        this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
+        let challenge_translate_inputs = Array.from(document.querySelectorAll("input[data-test='challenge-text-input']"));
+
+        this.challenge_node.displayTokens.forEach(token => {
+            if (token.isBlank) {
+                const answer = token.text;
+                const challenge_translate_input = challenge_translate_inputs.shift();
+                this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
+            }
+        });
+    }
+
+    solve_tap_cloze = () => {
+        // get the nodes for all the options
+        const tap_token_nodes = document.querySelectorAll("button[data-test='challenge-tap-token']");
+
+        // build a map from the text content to the node
+        let tap_tokens = {};
+        Array.from(tap_token_nodes).forEach(tap_token_node => {
+            let content = tap_token_node.childNodes[0].textContent;
+            tap_tokens[content] = tap_token_node;
+        });
+
+        // for each token
+        this.challenge_node.displayTokens.forEach(answer_token => {
+            // if it requires an answer
+            if (answer_token.damageStart !== undefined) {
+                // get the text for the answer
+                let answer = answer_token.text.substring(answer_token.damageStart);
+
+                // and click the right tap token
+                tap_tokens[answer].click();
+            };
+        });
+    }
+
+    solve_tap_compelete = () => {
+        // get the nodes for all the options
+        const tap_token_nodes = document.querySelectorAll("button[data-test='challenge-tap-token']");
+
+        // build a map from the text content to the node
+        let tap_tokens = {};
+        Array.from(tap_token_nodes).forEach(tap_token_node => {
+            let content = tap_token_node.childNodes[0].textContent;
+            tap_tokens[content] = tap_token_node;
+        });
+
+        // click on the right answers in the right order
+        this.challenge_node.displayTokens.forEach(token => {
+            if (token.isBlank) {
+                tap_tokens[token.text].click();
+            }
+        });
     }
 
     choose_index = (query_selector, correct_index) => {
