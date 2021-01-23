@@ -6,6 +6,7 @@ export default class DuolingoChallenge extends ReactUtils {
 
         // get the react internals for the current lesson
         this.challenge_internals = this.get_challenge_internals();
+        console.log(this.challenge_internals);
 
         // make sure the keyboard is enabled so we can paste in the input box
         if (!this.challenge_internals.browserSettings.typingEnabled) {
@@ -108,6 +109,9 @@ export default class DuolingoChallenge extends ReactUtils {
             case "read_comprehension":
                 this.solve_form();
                 break;
+            case "listen_comprehension":
+                this.solve_select_transcription();
+                break;
             default:
                 let error_string = `AUTOLINGO - UNKNOWN CHALLENGE TYPE: ${this.challenge_type}`;
                 alert(error_string);
@@ -132,9 +136,23 @@ export default class DuolingoChallenge extends ReactUtils {
     }
 
     solve_name = () => {
-        let answer = this.challenge_node.correctSolutions[0];
+        const answer = this.challenge_node.correctSolutions[0];
+
+        // find which article is the right one
+        const articles = this.challenge_node.articles;
+        const correct_article = articles.find(article => {
+            return answer.includes(article);
+        });
+
+        // select the correct article
+        Array.from(document.querySelectorAll("div[data-test='challenge-judge-text']")).find(e => {
+            return e.innerHTML === correct_article;
+        }).click();
+
+        // get the answer without the article and enter it
+        const answer_text = answer.replace(correct_article, "");
         let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
-        this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer}});
+        this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer_text}});
     }
 
     // fill in the blanks (in the table)

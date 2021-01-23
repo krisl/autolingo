@@ -2,17 +2,26 @@ import ReactUtils from "./ReactUtils.js"
 import DuolingoSkill from "./DuolingoSkill.js"
 import DuolingoChallenge from "./DuolingoChallenge.js"
 
-// RE-ENABLE LOGGING TO CONSOLE
+const DEBUG = false;
+
+// append an iframe so we can re-enable console.log
+// using its console.log
 const frame = document.createElement('iframe');
 document.body.appendChild(frame);
-const log = (content) => {
-    frame.contentWindow.console.log(content);
+
+// if DEBUG, re-enable console.log
+const welcome_message = "Welcome to Autolingo v1.0!";
+if (DEBUG) {
+    console.log = (content) => {
+        frame.contentWindow.console.log(content);
+    }
 }
+
+// print our welcome message regardless
+frame.contentWindow.console.log(welcome_message);
 
 // this restores ALL functionality to the console
 // console = frame.contentWindow.console;
-
-log("Welcome to Autolingo v1.0!")
 
 // re-inject the code whenever the url changes back to duolingo.com/learn
 let current_location = window.location.href;

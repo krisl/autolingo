@@ -1,8 +1,6 @@
 import DuolingoChallenge from "./DuolingoChallenge.js"
 import ReactUtils from "./ReactUtils.js"
 
-// whether or not to log debug messages
-const DEBUG = true;
 
 export default class DuolingoSkill extends ReactUtils {
     constructor (skill_node, skill_metadata) {
@@ -22,9 +20,7 @@ export default class DuolingoSkill extends ReactUtils {
     end () {
         clearInterval(this.state_machine);
         this.current_challenge.end();
-        if (DEBUG) {
-            console.log("Lesson complete, stopping the autocompleter!");
-        }
+        console.log("Lesson complete, stopping the autocompleter!");
     }
 
     complete_challenge = () => {
@@ -37,9 +33,7 @@ export default class DuolingoSkill extends ReactUtils {
         // else try to find the status and act accordingly
         const status_node = document.getElementsByClassName("mQ0GW")[0];
         if (!status_node) {
-            if (DEBUG) {
-                console.log("can't find status node!");
-            }
+            console.log("can't find status node!");
             return;
         }
 
@@ -71,6 +65,9 @@ export default class DuolingoSkill extends ReactUtils {
                 }
                 this.current_challenge.click_next();
                 this.current_challenge.click_next();
+                break;
+            // showing the question before you can actually answer it
+            case "SHOWING":
                 break;
             // grading this challenge
             case "BLAMING":
