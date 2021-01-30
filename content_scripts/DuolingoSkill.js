@@ -72,6 +72,8 @@ export default class DuolingoSkill extends ReactUtils {
             // grading this challenge
             case "BLAMING":
                 break;
+            case "GRADING":
+                break;
             // loading next challenge
             case "SLIDING":
                 break;
