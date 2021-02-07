@@ -138,19 +138,30 @@ export default class DuolingoChallenge extends ReactUtils {
     solve_name = () => {
         const answer = this.challenge_node.correctSolutions[0];
 
-        // find which article is the right one
+        
         const articles = this.challenge_node.articles;
-        const correct_article = articles.find(article => {
-            return answer.includes(article);
-        });
+        let answer_text;
 
-        // select the correct article
-        Array.from(document.querySelectorAll("div[data-test='challenge-judge-text']")).find(e => {
-            return e.innerHTML === correct_article;
-        }).click();
+        // if there are articles, find which article is the right one
+        // and click it and remove it from the answer
+        if (articles) {
+            const correct_article = articles.find(article => {
+                return answer.includes(article);
+            });
 
-        // get the answer without the article and enter it
-        const answer_text = answer.replace(correct_article, "");
+            // select the correct article
+            Array.from(document.querySelectorAll("div[data-test='challenge-judge-text']")).find(e => {
+                return e.innerHTML === correct_article;
+            }).click();
+
+            // get the answer without the article and enter it
+            answer_text = answer.replace(correct_article, "");
+        }
+        // if there are no articles, just write the text
+        else {
+            answer_text = answer;
+        }
+
         let challenge_translate_input = document.querySelector("input[data-test='challenge-text-input']");
         this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer_text}});
     }
