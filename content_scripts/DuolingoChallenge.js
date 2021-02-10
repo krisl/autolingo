@@ -146,7 +146,7 @@ export default class DuolingoChallenge extends ReactUtils {
         // and click it and remove it from the answer
         if (articles) {
             const correct_article = articles.find(article => {
-                return answer.includes(article);
+                return answer.startsWith(article);
             });
 
             // select the correct article
