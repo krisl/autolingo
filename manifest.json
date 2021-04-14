@@ -1,6 +1,6 @@
 {
     "name": "Autolingo",
-    "version": "2021.7",
+    "version": "2021.7.2",
     "manifest_version": 2,
     "description": "Automatically completes Duolingo lessons so you don't have to!",
     "background": {

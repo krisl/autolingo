@@ -36,7 +36,7 @@ export default class DuolingoChallenge extends ReactUtils {
     }
 
     get_challenge_internals = () => {
-        const challenge_elem = this.ReactFiber(document.getElementsByClassName("mQ0GW")[0]);
+        const challenge_elem = this.ReactFiber(document.querySelector(".mQ0GW"));
         if (challenge_elem) {
             return challenge_elem.return.return.stateNode.props;
         }
@@ -50,6 +50,7 @@ export default class DuolingoChallenge extends ReactUtils {
             case "translate":
                 this.solve_translate();
                 break;
+            // fill in the blank
             case "form":
                 this.solve_form();
                 break;
@@ -59,21 +60,27 @@ export default class DuolingoChallenge extends ReactUtils {
             case "listen_tap":
                 this.solve_listen_tap();
                 break;
+            // mark the correct meaning
             case "judge":
                 this.solve_judge();
                 break;
+            // what do you hear?
             case "select_transcription":
                 this.solve_select_transcription();
                 break;
+            // what sound does this make?
             case "character_intro":
-                this.solve_character_intro();
+                this.solve_select_transcription();
                 break;
+            // which one of these is "_____"?
             case "select":
                 this.solve_select();
                 break;
+            // what do you hear?
             case "select_pronunciation":
-                this.solve_select_pronunciation();
+                this.solve_select_transcription();
                 break;
+            // complete the translation
             case "complete_reverse_translation":
                 this.solve_complete_reverse_translation();
                 break;
@@ -86,6 +93,7 @@ export default class DuolingoChallenge extends ReactUtils {
             case "gap_fill":
                 this.solve_form();
                 break;
+            // fill in the blanks (in the table)
             case "tap_complete_table":
                 this.solve_tap_complete_table();
                 break;
@@ -110,6 +118,12 @@ export default class DuolingoChallenge extends ReactUtils {
                 this.solve_form();
                 break;
             case "listen_comprehension":
+                this.solve_select_transcription();
+                break;
+            // complete the chat
+            case "dialogue":
+                this.click_next();
+                this.click_next();
                 this.solve_select_transcription();
                 break;
             default:
@@ -165,7 +179,6 @@ export default class DuolingoChallenge extends ReactUtils {
         this.ReactFiber(challenge_translate_input).return.stateNode.props.onChange({"target": {"value": answer_text}});
     }
 
-    // fill in the blanks (in the table)
     solve_tap_complete_table = () => {
         const tokens = this.challenge_node.displayTableTokens;
 
@@ -256,7 +269,6 @@ export default class DuolingoChallenge extends ReactUtils {
         })
     }
 
-    // fill in the blank
     solve_form = () => {
         let correct_index = this.challenge_node.correctIndex;
         this.choose_index("div[data-test='challenge-choice']", correct_index);
@@ -267,37 +279,21 @@ export default class DuolingoChallenge extends ReactUtils {
         this.choose_index("div[data-test='challenge-choice-card']", correct_index);
     }
 
-    // mark the correct meaning
     solve_judge = () => {
         let correct_index = this.challenge_node.correctIndices[0];
         this.choose_index("div[data-test='challenge-judge-text']", correct_index);
     }
 
-    // what do you hear?
     solve_select_transcription = () => {
         let correct_index = this.challenge_node.correctIndex;
         this.choose_index("div[data-test='challenge-judge-text']", correct_index);
     }
 
-    // what sound does this make?
-    solve_character_intro = () => {
-        let correct_index = this.challenge_node.correctIndex;
-        this.choose_index("div[data-test='challenge-judge-text']", correct_index);
-    }
-
-    // which one of these is "_____"?
     solve_select = () => {
         let correct_index = this.challenge_node.correctIndex;
         this.choose_index("div[data-test='challenge-choice-card']", correct_index);
     }
 
-    // what do you hear?
-    solve_select_pronunciation = () => {
-        let correct_index = this.challenge_node.correctIndex;
-        this.choose_index("div[data-test='challenge-judge-text']", correct_index);
-    }
-
-    // complete the translation
     solve_complete_reverse_translation = () => {
         let challenge_translate_inputs = Array.from(document.querySelectorAll("input[data-test='challenge-text-input']"));
 
