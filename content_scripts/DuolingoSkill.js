@@ -20,7 +20,7 @@ export default class DuolingoSkill extends ReactUtils {
     end () {
         clearInterval(this.state_machine);
         this.current_challenge.end();
-        console.log("Lesson complete, stopping the autocompleter!");
+        console.logger("Lesson complete, stopping the autocompleter!");
     }
 
     complete_challenge = () => {
@@ -33,7 +33,7 @@ export default class DuolingoSkill extends ReactUtils {
         // else try to find the status and act accordingly
         const status_node = document.getElementsByClassName("mQ0GW")[0];
         if (!status_node) {
-            console.log("can't find status node!");
+            console.logger("can't find status node!");
             return;
         }
 
@@ -61,7 +61,7 @@ export default class DuolingoSkill extends ReactUtils {
                 try {
                     this.current_challenge.solve();
                 } catch (error) {
-                    console.log(error);
+                    console.logger(error);
                 }
                 this.current_challenge.click_next();
                 this.current_challenge.click_next();

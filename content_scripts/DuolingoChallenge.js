@@ -6,7 +6,7 @@ export default class DuolingoChallenge extends ReactUtils {
 
         // get the react internals for the current lesson
         this.challenge_internals = this.get_challenge_internals();
-        console.log(this.challenge_internals);
+        console.logger(this.challenge_internals);
 
         // make sure the keyboard is enabled so we can paste in the input box
         if (!this.challenge_internals.browserSettings.typingEnabled) {
@@ -137,7 +137,6 @@ export default class DuolingoChallenge extends ReactUtils {
 
     solve_name = () => {
         const answer = this.challenge_node.correctSolutions[0];
-
         
         const articles = this.challenge_node.articles;
         let answer_text;
@@ -260,12 +259,12 @@ export default class DuolingoChallenge extends ReactUtils {
     // fill in the blank
     solve_form = () => {
         let correct_index = this.challenge_node.correctIndex;
-        this.choose_index("label[data-test='challenge-choice']", correct_index);
+        this.choose_index("div[data-test='challenge-choice']", correct_index);
     }
     
     solve_character_select = () => {
         let correct_index = this.challenge_node.correctIndex;
-        this.choose_index("label[data-test='challenge-choice-card']", correct_index);
+        this.choose_index("div[data-test='challenge-choice-card']", correct_index);
     }
 
     // mark the correct meaning
@@ -289,7 +288,7 @@ export default class DuolingoChallenge extends ReactUtils {
     // which one of these is "_____"?
     solve_select = () => {
         let correct_index = this.challenge_node.correctIndex;
-        this.choose_index("label[data-test='challenge-choice-card']", correct_index);
+        this.choose_index("div[data-test='challenge-choice-card']", correct_index);
     }
 
     // what do you hear?
@@ -359,7 +358,8 @@ export default class DuolingoChallenge extends ReactUtils {
         if (correct_index >= choices.length) {
             correct_index = choices.length - 1;
         }
-        choices[correct_index].click()
+
+        choices[correct_index].click();
     }
 
     click_next = () => {
@@ -376,7 +376,7 @@ export default class DuolingoChallenge extends ReactUtils {
     set_click_next_interval = () => {
         // keep trying to click the 'next' button until something happens
         this.click_next_interval = setInterval(() => {
-            // console.log('trying to click next...')
+            // console.logger('trying to click next...')
             let player_next_button = document.querySelector("button[data-test='player-next']")
 
             // if we can click the button...
