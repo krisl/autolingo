@@ -101,8 +101,9 @@ export default class DuolingoSkill extends ReactUtils {
                 this.current_challenge.click_next();
                 break;
             // when they give you a little info before the lesson
+            case "PRE_LESSON_TIP_SPLASH":
             case "GRAMMAR_SKILL_SPLASH":
-                document.querySelector("button[class='_3SnKG _2OOOF _2A7uO _2gwtT _1nlVc _2fOC9 t5wFJ _3dtSu _25Cnc _3yAjN _3Ev3S _1figt _3B3OD']").click();
+                document.querySelector("button[class='_3SnKG _2OOOF _2A7uO _2gwtT _1nlVc _2fOC9 t5wFJ _3dtSu _25Cnc _3yAjN _3Ev3S _1figt _3B3OD']")?.click();
                 // alert("restart autolingo on this lesson and it will work")
                 // this.end();
                 break;

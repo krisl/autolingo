@@ -126,11 +126,19 @@ export default class DuolingoChallenge extends ReactUtils {
                 this.click_next();
                 this.solve_select_transcription();
                 break;
+            // speak this sentence
+            case "speak":
+                this.skip_speak();
+                break;
             default:
                 let error_string = `AUTOLINGO - UNKNOWN CHALLENGE TYPE: ${this.challenge_type}`;
                 alert(error_string);
                 throw new Error(error_string);
         }
+    }
+
+    skip_speak () {
+        document.querySelector("[data-test='player-skip']")?.click()
     }
 
     insert_translation = (translation) => {
