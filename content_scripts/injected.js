@@ -24,18 +24,24 @@ frame.contentWindow.console.log(welcome_message);
 
 // if the user changes the language, re-inject
 let previous_language = null;
+let previous_url = null;
 setInterval(() => {
     // get the current language from the page
     const page_data = new ReactUtils().ReactFiber(document.querySelector("._3BJQ_"))?.return?.stateNode?.props;
     const current_language = page_data?.courses?.find(e => { return e.isCurrent; })?.learningLanguageId;
 
+    // get current url
+    const current_url = document.location.href;
+
     // DEBUG INFO
-    console.logger(previous_language, current_language);
+    // console.logger("language watch", previous_language, current_language);
+    // console.logger("url watch", previous_url, current_url);
 
     // if the language changed, we know we just loaded the home page
-    if (previous_language !== current_language) {
+    if (previous_language !== current_language || previous_url !== current_url) {
         inject_autolingo();
         previous_language = current_language;
+        previous_url = current_url;
     }
 }, 100);
 
@@ -54,9 +60,17 @@ const inject = (extension_id) => {
         stylesheet_loaded = true;
     }
 
-    // complete the current challenge when the user clicks
+    // solve the current challenge when the user clicks
     // the corresponding button in the popup
-    document.addEventListener("complete_challenge", () => {
+    document.addEventListener("solve_challenge", () => {
+        const challenge = new DuolingoChallenge();
+        challenge.solve();
+        challenge.click_next();
+    });
+
+    // solve the challenge and go to the next challenge
+    // when the user clicks the corresponding button in the popup
+    document.addEventListener("solve_skip_challenge", () => {
         const challenge = new DuolingoChallenge();
         challenge.solve();
         challenge.click_next();
@@ -73,7 +87,7 @@ const inject_autolingo = () => {
             const tier_img_url = `${the_extension_id}/images/diamond-league.png`;
     
             // iterate over all skills
-            let all_skill_nodes = document.querySelectorAll("div[data-test='skill']");
+            let all_skill_nodes = document.querySelectorAll("[data-test='skill']");
             console.logger(all_skill_nodes)
             all_skill_nodes.forEach(skill_node => {
     
@@ -126,16 +140,26 @@ const inject_autolingo = () => {
 }
 
 const set_hotkeys = () => {
+    console.logger("hotkeys set")
     document.addEventListener("keydown", e => {
-
-        // ALT+S to skip the current challenge
-        if (e.key === "s" && e.altKey) {
-            const skip_challenge_button = document.querySelector("button[data-test='player-skip']");
-            if (skip_challenge_button) {
-                skip_challenge_button.click();
-            }
+        // CTRL+ENTER to solve and skip the current challenge
+        if (e.key === "Enter" && e.ctrlKey) {
+            const challenge = new DuolingoChallenge();
+            challenge.solve();
+            challenge.click_next();
         }
 
+        // ALT+ENTER
+        // solve the challenge (but show us the right answer too)
+        if (e.key === "Enter" && e.altKey) {
+            const challenge = new DuolingoChallenge();
+            challenge.solve();
+        }
+
+        // ALT+S to skip the current challenge and fail it
+        if (e.key === "s" && e.altKey) {
+            document.querySelector("[data-test='player-skip']")?.click();
+        }
     });
 }
 

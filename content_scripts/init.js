@@ -31,8 +31,11 @@ chrome.storage.local.get(
             // add a listener that forwards messages to the injected script
             chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 switch (message.action) {
-                    case "complete_challenge":
-                        send_custom_event("complete_challenge");
+                    case "solve_challenge":
+                        send_custom_event("solve_challenge");
+                        break;
+                    case "solve_skip_challenge":
+                        send_custom_event("solve_skip_challenge");
                         break;
                     default:
                         console.error(`Given unknown message type '${message.action}'`);

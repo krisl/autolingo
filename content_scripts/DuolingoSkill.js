@@ -11,8 +11,8 @@ export default class DuolingoSkill extends ReactUtils {
     }
 
     start = () => {
-        this.skill_node.children[0].click();
-        document.querySelector("button[data-test='start-button']").click();
+        this.skill_node.children[0]?.click();
+        document.querySelector("[data-test='start-button']")?.click();
 
         this.state_machine = setInterval(this.complete_challenge, 10);
     }
@@ -91,6 +91,7 @@ export default class DuolingoSkill extends ReactUtils {
                 this.current_challenge.click_next();
                 break;
             // just finished the lesson, loading results
+            case "COACH_DUO_SUBMITTING":
             case "SUBMITTING":
                 break;
             // results are here!
@@ -100,12 +101,20 @@ export default class DuolingoSkill extends ReactUtils {
                 this.current_challenge.click_next();
                 this.current_challenge.click_next();
                 break;
+            // little ad that pops up
+            case "PLUS_AD":
+                this.current_challenge = new DuolingoChallenge();
+                this.current_challenge.click_next();
+                break;
             // when they give you a little info before the lesson
             case "PRE_LESSON_TIP_SPLASH":
             case "GRAMMAR_SKILL_SPLASH":
-                document.querySelector("button[class='_3SnKG _2OOOF _2A7uO _2gwtT _1nlVc _2fOC9 t5wFJ _3dtSu _25Cnc _3yAjN _3Ev3S _1figt _3B3OD']")?.click();
-                // alert("restart autolingo on this lesson and it will work")
-                // this.end();
+                document.querySelector("[data-test=player-next]")?.click();
+                Array.from(document.querySelectorAll("span")).forEach(e => {
+                    if (e.innerText.toLowerCase().includes("start lesson")) {
+                        e?.click();
+                    }
+                });
                 break;
             default:
                 alert("UNKNOWN STATUS: " + status);

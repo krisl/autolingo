@@ -21,9 +21,37 @@ body {
     }
 }
 
+.row-button {
+    background: white;
+    outline: none;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    border: 5px solid transparent;
+    user-select: none;
+}
+
+#solve-button {
+    box-shadow: 1px 1px 8px #FFD900;
+}
+
+#solve-button:active {
+    box-shadow: 1px 1px 4px #FFD900;
+}
+
+#solve-skip-button {
+    box-shadow: 1px 1px 8px #75c3c7;
+}
+
+#solve-skip-button:active {
+    box-shadow: 1px 1px 4px #75c3c7;
+}
+
 div#toggle-enabled-text {
     font-size: 20px;
     border-left: 20px solid transparent;
+    user-select: none;
 }
 
 .slider-container {
@@ -46,8 +74,6 @@ div#toggle-enabled-text {
 
     width: 100%;
 
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
     border-top: 20px solid transparent;
     border-bottom: 20px solid transparent;
 
@@ -76,10 +102,12 @@ div#toggle-enabled-text {
     border-left: 10px solid transparent;
     font-size: 30px;
     font-weight: bold;
-    color: #333333
+    color: #333333;
+    user-select: none;
 }
 
 .topbar-logo {
+    pointer-events: none;
     max-width: 50px;
 }
 
@@ -145,8 +173,4 @@ input:checked + .autolingo-slider:before {
 	font: inherit;
 	cursor: pointer;
 	outline: inherit;
-}
-
-.complete-challenge-container {
-    
 }

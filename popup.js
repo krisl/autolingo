@@ -43,10 +43,18 @@ const toggle_extension_enabled = () => {
     reload_all_duolingo_tabs();
 }
 
-const complete_challenge = () => {
+const send_event = (actionType) => {
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, {action: "complete_challenge"});  
+        chrome.tabs.sendMessage(tabs[0].id, {action: actionType});  
     });
+}
+
+const solve_challenge = () => {
+    send_event("solve_challenge");
+}
+
+const solve_skip_challenge = () => {
+    send_event("solve_skip_challenge");
 }
 
 const render_content = () => {
@@ -61,15 +69,19 @@ const render_content = () => {
             </label>
             <div id="toggle-enabled-text">Disabled</div>
         </div>
-        <div class="complete-challenge-container content-row">
-            <button id="complete-challenge-button">Complete Current Challenge</button>
+        <div class="solve-skip-container content-row">
+            <button id="solve-skip-button" class="row-button" title="Ctrl+Enter">Solve & Skip</button>
+        </div>
+        <div class="solve-container content-row">
+            <button id="solve-button" class="row-button" title="Alt+Enter">Solve</button>
         </div>
     `
 
     document.getElementById("toggle-enabled-input").onclick = toggle_extension_enabled;
     update_enabled_slider(enabled);
 
-    document.getElementById("complete-challenge-button").onclick = complete_challenge;
+    document.getElementById("solve-button").onclick = solve_challenge;
+    document.getElementById("solve-skip-button").onclick = solve_skip_challenge;
 }
 
 // ON LOAD
