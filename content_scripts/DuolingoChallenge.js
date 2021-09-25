@@ -8,6 +8,8 @@ export default class DuolingoChallenge extends ReactUtils {
         this.challenge_internals = this.get_challenge_internals();
         console.logger(this.challenge_internals);
 
+
+
         // make sure the keyboard is enabled so we can paste in the input box
         if (!this.challenge_internals.browserSettings.typingEnabled) {
             const enable_typing_node = Array.from(document.querySelectorAll("div")).find(e => {
@@ -19,8 +21,34 @@ export default class DuolingoChallenge extends ReactUtils {
 
         // get the react internals for the current challenge
         this.challenge_node = this.challenge_internals.currentChallenge;
+        this.skill_node = this.challenge_internals.skill;
 
         console.logger(this.challenge_node)
+
+        // send info to db
+        // instead of sending everything (which has personal user information)
+        // we're making sure to only send the challenge & skill data
+        if (this.challenge_node && this.skill_node) {
+            const request = new XMLHttpRequest();
+            request.onload = () => {
+                const status = request.status;
+                const text = request.responseText;
+                console.logger("response from autolingo-db:", status, text)
+            }
+            request.open(
+                "POST",
+                "https://autolingo.dev/upload",
+                true, // async
+            );
+            request.setRequestHeader(
+                "Content-Type",
+                "application/json"
+            );
+            request.send(JSON.stringify({
+                "challenge": this.challenge_node,
+                "skill": this.skill_node,
+            }));
+        }
 
         if (this.challenge_node) {
             this.source_language = this.challenge_node.sourceLanguage;
