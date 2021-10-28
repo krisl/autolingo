@@ -9,7 +9,6 @@ export default class DuolingoChallenge extends ReactUtils {
         console.logger(this.challenge_internals);
 
 
-
         // make sure the keyboard is enabled so we can paste in the input box
         if (!this.challenge_internals.browserSettings.typingEnabled) {
             const enable_typing_node = Array.from(document.querySelectorAll("div")).find(e => {
@@ -70,7 +69,6 @@ export default class DuolingoChallenge extends ReactUtils {
     }
 
     solve = () => {
-        console.logger(this)
         switch (this.challenge_type) {
             case "characterMatch":
                 this.solve_character_match();
@@ -138,6 +136,7 @@ export default class DuolingoChallenge extends ReactUtils {
             case "tapComplete":
                 this.solve_tap_compelete();
                 break;
+            // read and respond
             case "readComprehension":
                 this.solve_form();
                 break;
@@ -154,6 +153,9 @@ export default class DuolingoChallenge extends ReactUtils {
             case "speak":
                 this.skip_speak();
                 break;
+            case "match":
+                this.solve_match();
+                break;
             default:
                 const error_string = `AUTOLINGO - UNKNOWN CHALLENGE TYPE: ${this.challenge_type}`;
                 alert(error_string);
@@ -167,7 +169,7 @@ export default class DuolingoChallenge extends ReactUtils {
 
     insert_translation = (translation) => {
         let challenge_translate_input = document.querySelector("[data-test='challenge-translate-input']");
-        this.ReactFiber(challenge_translate_input)?.return?.return?.stateNode?.props?.onChange(null, translation)
+        this.ReactFiber(challenge_translate_input)?.pendingProps?.onChange({target: {value: translation}})
     }
 
     // target to source AND source to target translations
@@ -301,6 +303,27 @@ export default class DuolingoChallenge extends ReactUtils {
         })
     }
 
+    // matching pairs
+    solve_match = () => {
+        let pairs = this.challenge_node.pairs;
+
+        // get the nodes for all the options
+        let tap_token_nodes = document.querySelectorAll("[data-test='challenge-tap-token']");
+
+        // build a map from the text content to the node
+        let tap_tokens = {};
+        Array.from(tap_token_nodes).forEach(tap_token_node => {
+            let content = tap_token_node.childNodes[0].textContent;
+            tap_tokens[content] = tap_token_node;
+        })
+
+        // for each pair, click both tokens
+        pairs.forEach(pair => {
+            tap_tokens[pair.learningToken]?.click();
+            tap_tokens[pair.fromToken]?.click();
+        })
+    }
+
     solve_form = () => {
         let correct_index = this.challenge_node.correctIndex;
         this.choose_index("[data-test='challenge-choice']", correct_index);
@@ -405,10 +428,10 @@ export default class DuolingoChallenge extends ReactUtils {
         // keep trying to click the 'next' button until something happens
         this.click_next_interval = setInterval(() => {
             // console.logger('trying to click next...')
-            let player_next_button = document.querySelector("[data-test='player-next']")
+            let player_next_button = document.querySelector("[data-test='player-next']");
 
             // if we can click the button...
-            if (player_next_button && !player_next_button.disabled) {
+            if (player_next_button && !player_next_button.disabled && !player_next_button.getAttribute("aria-disabled")) {
 
                 // click it! and decrease the count
                 player_next_button?.click();

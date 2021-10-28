@@ -3,16 +3,15 @@ import ReactUtils from "./ReactUtils.js"
 
 
 export default class DuolingoSkill extends ReactUtils {
-    constructor (skill_node, skill_metadata) {
+    constructor (skill_node) {
         super();
 
         this.skill_node = skill_node;
-        this.skill_metadata = skill_metadata;
     }
 
-    start = () => {
+    start = (start_button_selector) => {
         this.skill_node.children[0]?.click();
-        document.querySelector("[data-test='start-button']")?.click();
+        document.querySelector(`[data-test='${start_button_selector}']`)?.click();
 
         this.state_machine = setInterval(this.complete_challenge, 10);
     }
@@ -45,6 +44,7 @@ export default class DuolingoSkill extends ReactUtils {
                 break;
             // lil pop-up at the beginning of practice lessons
             case "SKILL_PRACTICE_SPLASH":
+            case "CHECKPOINT_TEST_SPLASH":
                 // click START PRACTICE
                 this.current_challenge = new DuolingoChallenge();
                 this.current_challenge.click_next();
