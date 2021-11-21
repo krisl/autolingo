@@ -11,8 +11,8 @@ export default class DuolingoChallenge extends ReactUtils {
 
         // make sure the keyboard is enabled so we can paste in the input box
         if (!this.challenge_internals.browserSettings.typingEnabled) {
-            const enable_typing_node = Array.from(document.querySelectorAll("div")).find(e => {
-                return e.innerHTML.toLowerCase() === "use keyboard"
+            const enable_typing_node = Array.from(document.querySelectorAll("[data-test='player-toggle-keyboard'] div")).find(e => {
+                return e.innerHTML.toLowerCase() === "use keyboard" || e.innerHTML.toLowerCase() === "make harder"
             });
 
             enable_typing_node?.click();
@@ -350,15 +350,8 @@ export default class DuolingoChallenge extends ReactUtils {
     }
 
     solve_complete_reverse_translation = () => {
-        let challenge_translate_inputs = Array.from(document.querySelectorAll("[data-test='challenge-text-input']"));
-
-        this.challenge_node.displayTokens.forEach(token => {
-            if (token.isBlank) {
-                const answer = token.text;
-                const challenge_translate_input = challenge_translate_inputs.shift();
-                this.ReactFiber(challenge_translate_input)?.return?.stateNode?.props?.onChange({"target": {"value": answer}});
-            }
-        });
+        let translation = this.challenge_node.displayTokens.map(x => x.text).join('')
+        this.insert_translation(translation);
     }
 
     solve_tap_cloze = () => {
