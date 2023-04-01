@@ -75,6 +75,7 @@ export default class DuolingoChallenge extends ReactUtils {
         this.solve_complete_reverse_translation();
         break;
       case "listen":
+      case "listenMatch":
       case "listenTap":
         this.solve_listen_tap();
         break;
