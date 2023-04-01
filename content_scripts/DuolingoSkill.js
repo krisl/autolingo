@@ -16,10 +16,8 @@ export default class DuolingoSkill extends ReactUtils {
 
     // for legendary lessons
     if (this.is_final_level) {
-      document
-        .querySelector('[class="_3HhhB _2NolF _275sd _1ZefG _1M1mb _26QYy"]')
-        ?.click(); // TODO find something more reliable
-      document.querySelector('[class="WOZnx _275sd _1ZefG KJuUV"]')?.click();
+        document.querySelector('[class="_3HhhB _2NolF _275sd _1ZefG _1M1mb _26QYy"]')?.click(); // TODO find something more reliable
+        document.querySelector('[class="WOZnx _275sd _1ZefG KJuUV"]')?.click();
     }
 
     setTimeout(() => {
@@ -42,7 +40,9 @@ export default class DuolingoSkill extends ReactUtils {
 
   end() {
     clearInterval(this.state_machine);
-    this.current_challenge.end();
+    if (this.current_challenge != null) {
+      this.current_challenge.end();
+    }
     console.logger("Lesson complete, stopping the autocompleter!");
   }
 
@@ -60,9 +60,9 @@ export default class DuolingoSkill extends ReactUtils {
       return;
     }
 
-    const status =
-      this.ReactFiber(status_node).return.return.stateNode.props.player.status;
+    const status = this.ReactFiber(status_node).return.return.stateNode.props.player.status;
 
+    console.log(status);
     console.logger(status);
     switch (status) {
       // loading this lesson
@@ -137,6 +137,7 @@ export default class DuolingoSkill extends ReactUtils {
         }
         break;
       // little ad that pops up
+      case "LEGENDARY_DUO":
       case "PLUS_AD":
         this.current_challenge = new DuolingoChallenge();
         this.current_challenge.click_next();

@@ -38,10 +38,6 @@ setInterval(() => {
   // get current url
   const current_url = document.location.href;
 
-  // DEBUG INFO
-  //console.logger("Language Watch:", previous_language, current_language);
-  //console.logger("URL Watch:", previous_url, current_url);
-
   // if the language changed, we know we just loaded the home page
   if (previous_language !== current_language || previous_url !== current_url) {
     inject_autolingo();
@@ -83,7 +79,6 @@ const inject = (extension_id) => {
     const challenge = new DuolingoChallenge();
     challenge.solve();
     challenge.click_next();
-    //    challenge.click_next();
   });
 
   // autocompletes the current lesson
@@ -241,7 +236,6 @@ const inject_autolingo = () => {
             key_autolingo_skill_tooltip.appendChild(key_autolingo_tooltip_text);
             key_autolingo_skill_tooltip.appendChild(key_autolingo_skill);
             autolingo_skill_container.appendChild(key_autolingo_skill_tooltip);
-            //          skill_node.appendChild(autolingo_skill_container);
           }
         }
       });
@@ -339,7 +333,6 @@ const set_hotkeys = () => {
     }
     // If platform is macOS
     if (navigator.userAgentData.platform == "macOS") {
-      // if (e.key === "Enter" && e.ctrlKey || e.metaKey) {
       if (e.key === "Enter" && e.ctrlKey) {
         const challenge = new DuolingoChallenge();
         challenge.solve();

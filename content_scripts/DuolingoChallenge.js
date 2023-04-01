@@ -1,7 +1,7 @@
 import ReactUtils from "./ReactUtils.js";
 
 export default class DuolingoChallenge extends ReactUtils {
-  constructor () {
+  constructor() {
     super();
 
     // get the react internals for the current lesson
@@ -38,7 +38,9 @@ export default class DuolingoChallenge extends ReactUtils {
   }
 
   get_challenge_internals = () => {
-    let thisPrefixName = Object.keys(document.querySelector(".mQ0GW")).find((e) => e.includes("__reactFiber$"));
+    let thisPrefixName = Object.keys(document.querySelector(".mQ0GW")).find(
+      (e) => e.includes("__reactFiber$")
+    );
     let challenge_elements = document.querySelector(".mQ0GW")[thisPrefixName];
     return challenge_elements.return.return.stateNode.props;
   };
@@ -115,7 +117,7 @@ export default class DuolingoChallenge extends ReactUtils {
         this.solve_match();
         break;
       case "characterTrace":
-        this.skip_trace();
+        this.skip_speak();
         break;
       default:
         const error_string = `AUTOLINGO - UNKNOWN CHALLENGE TYPE: ${this.challenge_type}`;
@@ -128,16 +130,14 @@ export default class DuolingoChallenge extends ReactUtils {
     document.querySelector("[data-test='player-skip']")?.click();
   }
 
-  skip_trace() {
-    document.querySelector("[data-test='player-skip']")?.click();
-  }
-
   insert_translation = (translation) => {
     let challenge_translate_input = document.querySelector(
       "[data-test='challenge-translate-input']"
     );
     this.ReactFiber(challenge_translate_input)?.pendingProps?.onChange({
-      target: { value: translation.toLowerCase().replace(/[.,/!^&*;:{}=-_`~()]/g, "") },//Translation Decapitalized and DePunctuated
+      target: {
+        value: translation.toLowerCase().replace(/[.,/!^&*;:{}=-_`~()]/g, ""),
+      },
     });
   };
 
@@ -270,7 +270,9 @@ export default class DuolingoChallenge extends ReactUtils {
     let pairs = this.challenge_node.pairs;
 
     // get the nodes for all the options
-    let tap_token_nodes = document.querySelectorAll("[data-test='challenge-tap-token']");
+    let tap_token_nodes = document.querySelectorAll(
+      "[data-test='challenge-tap-token']"
+    );
 
     // build a map from the text content to the node
     let tap_tokens = {};
@@ -281,7 +283,9 @@ export default class DuolingoChallenge extends ReactUtils {
       // This is a roundabout for japanese course.
       if (contentTagElement.tagName == "RUBY") {
         let rb_values = contentTagElement.getElementsByTagName("rb");
-        content = Array.from(rb_values).map((e) => e.textContent).join("");
+        content = Array.from(rb_values)
+          .map((e) => e.textContent)
+          .join("");
       } else {
         content = contentTagElement.textContent;
       }
@@ -301,7 +305,9 @@ export default class DuolingoChallenge extends ReactUtils {
     let pairs = this.challenge_node.pairs;
 
     // get the nodes for all the options
-    let tap_token_nodes = document.querySelectorAll("[data-test='challenge-tap-token']");
+    let tap_token_nodes = document.querySelectorAll(
+      "[data-test='challenge-tap-token']"
+    );
 
     // build a map from the text content to the node
     let tap_tokens = {};
@@ -312,11 +318,12 @@ export default class DuolingoChallenge extends ReactUtils {
       // This is a roundabout for japanese course.
       if (contentTagElement.tagName == "RUBY") {
         let rb_values = contentTagElement.getElementsByTagName("rb");
-        content = Array.from(rb_values).map((e) => e.textContent).join("");
+        content = Array.from(rb_values)
+          .map((e) => e.textContent)
+          .join("");
       } else {
         content = contentTagElement.textContent;
       }
-
       tap_tokens[content] = tap_token_node;
     });
 
