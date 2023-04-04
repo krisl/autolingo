@@ -9,16 +9,9 @@ export default class DuolingoChallenge extends ReactUtils {
     console.logger(this.challenge_internals);
 
     // make sure the keyboard is enabled so we can paste in the input box
-    if (!this.challenge_internals.browserSettings.typingEnabled) {
-      const enable_typing_node = Array.from(
-        document.querySelectorAll("div")
-      ).find((e) => {
-        return e.innerHTML.toLowerCase() === "use keyboard";
-      });
-
-      enable_typing_node?.click();
-    }
-
+    
+    //deleted to make it work
+    
     // get the react internals for the current challenge
     this.challenge_node = this.challenge_internals.currentChallenge;
     this.skill_node = this.challenge_internals.skill;
