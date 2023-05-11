@@ -7,11 +7,11 @@ export default class DuolingoChallenge extends ReactUtils {
     // get the react internals for the current lesson
     this.challenge_internals = this.get_challenge_internals();
     console.logger(this.challenge_internals);
-
+//-----------------------------------------------------------------------
     // make sure the keyboard is enabled so we can paste in the input box
     
     //deleted to make it work
-    
+//-----------------------------------------------------------------------   
     // get the react internals for the current challenge
     this.challenge_node = this.challenge_internals.currentChallenge;
     this.skill_node = this.challenge_internals.skill;
