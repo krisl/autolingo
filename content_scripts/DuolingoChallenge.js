@@ -68,6 +68,9 @@ export default class DuolingoChallenge extends ReactUtils {
       case "completeReverseTranslation":
         this.solve_complete_reverse_translation();
         break;
+      case "partialReverseTranslate":
+        this.solve_partial_reverse_translation();
+        break;
       case "listen":
       case "listenTap":
         this.solve_listen_tap();
@@ -331,6 +334,14 @@ export default class DuolingoChallenge extends ReactUtils {
     });
   };
 
+  solve_partial_reverse_translation = () => {
+     const elm = document.querySelector('[data-test*="challenge-partialReverseTranslate"]')?.querySelector("span[contenteditable]");
+     const nativeInputNodeTextSetter = Object.getOwnPropertyDescriptor(Node.prototype, "textContent").set
+     const answer = this.challenge_node.displayTokens.filter(t => t.isBlank)?.map(t => t.text).join(' ')
+     nativeInputNodeTextSetter.call(elm, answer);
+     const inputEvent = new Event('input', { bubbles: true });
+    elm.dispatchEvent(inputEvent);
+  };
   solve_tap_cloze = () => {
     // get the nodes for all the options
     const tap_token_nodes = document.querySelectorAll(
