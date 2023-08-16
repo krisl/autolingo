@@ -73,6 +73,7 @@ export default class DuolingoChallenge extends ReactUtils {
       case "selectPronunciation":
         this.solve_select_transcription();
         break;
+      case "listenComplete":
       case "completeReverseTranslation":
         this.solve_complete_reverse_translation();
         break;
@@ -83,9 +84,6 @@ export default class DuolingoChallenge extends ReactUtils {
       case "listenMatch":
       case "listenTap":
         this.solve_listen_tap();
-        break;
-      case "listenComplete":
-        this.solve_complete_reverse_translation();
         break;
       case "name":
         this.solve_name();
