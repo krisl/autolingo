@@ -153,8 +153,19 @@ export default class DuolingoChallenge extends ReactUtils {
 
   // target to source AND source to target translations
   solve_translate = () => {
-    let translation = this.challenge_node.correctSolutions[0];
-    this.insert_translation(translation);
+    if (document.querySelector("[data-test='challenge-translate-input']")) {
+      let translation = this.challenge_node.correctSolutions[0];
+      this.insert_translation(translation);
+    }
+    else {
+      console.logger("cant be solved by text input, is it tap?")
+      this.challenge_node.correctTokens.forEach(token => {
+        const w = document.querySelector(`[data-test='word-bank'] button:not(._2mDNn)[data-test="${token}-challenge-tap-token"]`)
+        console.logger(w.innerText, w)
+        w.click()
+      })
+    }
+
   };
 
   solve_listen_tap = () => {
