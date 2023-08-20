@@ -82,6 +82,7 @@ const send_event = (actionType) => {
 
 const solve_challenge = () => {
   send_event("solve_challenge");
+  window.close()
 };
 
 const solve_skip_challenge = () => {
