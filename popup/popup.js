@@ -105,15 +105,19 @@ const render_content = () => {
             </label>
             <div id="toggle-enabled-text">Disabled</div>
         </div>
+        <!--
         <div class="solve-skip-container content-row">
             <button id="solve-skip-button" class="row-button" title="Ctrl+Enter">Solve & Skip</button>
         </div>
+        -->
         <div class="solve-container content-row">
             <button id="solve-button" class="row-button" title="Alt+Enter">Solve</button>
         </div>
+        <!--
         <div class="auto-container content-row">
             <button id="auto-button" class="row-button" title="Alt+D">Autocomplete</button>
         </div>
+        -->
     `;
 
   document.getElementById("toggle-enabled-input").onclick =
