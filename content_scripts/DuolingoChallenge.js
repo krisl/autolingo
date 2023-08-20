@@ -1,5 +1,17 @@
 import ReactUtils from "./ReactUtils.js";
 
+function click_check() {
+  // click the "Check" button
+  const check = document.querySelector("[data-test=player-next] :not(.LhRk3)")
+
+  if (check?.innerText !== "CHECK") {
+    console.logger("Could not find 'check' button")
+    return
+  }
+
+  check.click();
+}
+
 export default class DuolingoChallenge extends ReactUtils {
   constructor() {
     super();
@@ -121,6 +133,7 @@ export default class DuolingoChallenge extends ReactUtils {
         alert(error_string);
         throw new Error(error_string);
     }
+    click_check()
   };
 
   skip_speak() {
