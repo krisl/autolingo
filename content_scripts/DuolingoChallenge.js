@@ -1,10 +1,10 @@
 import ReactUtils from "./ReactUtils.js";
 
-function click_check() {
+function click_check(state) {
   // click the "Check" button
   const check = document.querySelector("[data-test=player-next] :not(.LhRk3)")
 
-  if (check?.innerText !== "CHECK") {
+  if (!check) {
     console.logger("Could not find 'check' button")
     return
   }
@@ -19,6 +19,7 @@ export default class DuolingoChallenge extends ReactUtils {
     // get the react internals for the current lesson
     this.challenge_internals = this.get_challenge_internals();
     console.logger(this.challenge_internals);
+    this.challenge_internals.player.speakIneligibleReasons = []
 
     // make sure the keyboard is enabled so we can paste in the input box
     
@@ -133,7 +134,11 @@ export default class DuolingoChallenge extends ReactUtils {
         alert(error_string);
         throw new Error(error_string);
     }
-    click_check()
+    if (this.challenge_internals.player.status === "GUESSING") {
+      click_check()
+    } else {
+      console.logger("oops", this.challenge_internals.player)
+    }
   };
 
   skip_speak() {
