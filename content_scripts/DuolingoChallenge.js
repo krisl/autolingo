@@ -44,11 +44,11 @@ export default class DuolingoChallenge extends ReactUtils {
   }
 
   get_challenge_internals = () => {
-    let thisPrefixName = Object.keys(document.querySelector(".mQ0GW")).find(
+    let thisPrefixName = Object.keys(document.querySelector("._1RBqm")).find(
       (e) => e.includes("__reactFiber$")
     );
-    let challenge_elements = document.querySelector(".mQ0GW")[thisPrefixName];
-    return challenge_elements.return.return.stateNode.props;
+    let challenge_elements = document.querySelector("._1RBqm")[thisPrefixName];
+    return challenge_elements.return.stateNode.props;
   };
 
   solve = () => {
@@ -165,7 +165,7 @@ export default class DuolingoChallenge extends ReactUtils {
     else {
       console.logger("cant be solved by text input, is it tap?")
       this.challenge_node.correctTokens.forEach(token => {
-        const w = document.querySelector(`[data-test='word-bank'] button:not(._2mDNn)[data-test="${token}-challenge-tap-token"]`)
+        const w = document.querySelector(`[data-test='word-bank'] button._3CBig[data-test="${token}-challenge-tap-token"]`)
         console.logger(w.innerText, w)
         w.click()
       })
