@@ -125,7 +125,7 @@ const render_content = () => {
   update_enabled_slider(enabled);
 
   document.getElementById("solve-button").onclick = solve_challenge;
-  document.getElementById("solve-skip-button").onclick = solve_skip_challenge;
+  //document.getElementById("solve-skip-button").onclick = solve_skip_challenge;
   document.getElementById("auto-button").onclick = autocomplete_lesson;
 };
 
