@@ -44,10 +44,12 @@ export default class DuolingoChallenge extends ReactUtils {
   }
 
   get_challenge_internals = () => {
-    let thisPrefixName = Object.keys(document.querySelector("._1RBqm")).find(
+    // to find when selector changes
+    // $$("div").map(x => [x, Object.keys(x).find(e => e.includes("__reactFiber$"))]).map(([a,b]) => a[b]).filter(x => x).map(x => x.return.stateNode?.props)
+    let thisPrefixName = Object.keys(document.querySelector("._3yE3H")).find(
       (e) => e.includes("__reactFiber$")
     );
-    let challenge_elements = document.querySelector("._1RBqm")[thisPrefixName];
+    let challenge_elements = document.querySelector("._3yE3H")[thisPrefixName];
     return challenge_elements.return.stateNode.props;
   };
 
@@ -165,7 +167,9 @@ export default class DuolingoChallenge extends ReactUtils {
     else {
       console.logger("cant be solved by text input, is it tap?")
       this.challenge_node.correctTokens.forEach(token => {
-        const w = document.querySelector(`[data-test='word-bank'] button._3CBig[data-test="${token}-challenge-tap-token"]`)
+        // unselected class="_3whsM _8AMBh _2vfJy _3Qy5R notranslate _3ZtW_ _2O7Ua _3U5_i _1HvEX"
+        // selects           _3whsM _8AMBh _2vfJy _3Qy5R notranslate _3ZtW_ _2O7Ua _3U5_i _1HvEX
+        const w = document.querySelector(`[data-test='word-bank'] button._3whsM[data-test="${token}-challenge-tap-token"]`)
         console.logger(w.innerText, w)
         w.click()
       })
