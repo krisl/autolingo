@@ -167,9 +167,7 @@ export default class DuolingoChallenge extends ReactUtils {
     else {
       console.logger("cant be solved by text input, is it tap?")
       this.challenge_node.correctTokens.forEach(token => {
-        // unselected class="_3whsM _8AMBh _2vfJy _3Qy5R notranslate _3ZtW_ _2O7Ua _3U5_i _1HvEX"
-        // selects           _3whsM _8AMBh _2vfJy _3Qy5R notranslate _3ZtW_ _2O7Ua _3U5_i _1HvEX
-        const w = document.querySelector(`[data-test='word-bank'] button._3whsM[data-test="${token}-challenge-tap-token"]`)
+        const w = document.querySelector(`[data-test='word-bank'] button.WxjqG[data-test="${token}-challenge-tap-token"]`)
         console.logger(w.innerText, w)
         w.click()
       })
