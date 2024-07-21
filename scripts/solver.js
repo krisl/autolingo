@@ -213,6 +213,7 @@ class DuolingoChallenge {
                 case "reverse_tap":
                 case "reverse_translate":
                 case "transliterate":
+                case "translate":
                     return this.challengeInfo.correctSolutions[0];
 
                 default:
