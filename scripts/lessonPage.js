@@ -33,8 +33,8 @@ window.addEventListener("LessonStatusChanged", async function (e) {
                 currentChallange.printDebugInfo();
 
                 if (!solve) {
-                    alert("Unknown problem type: " + currentChallange.challengeType);
-                    throw new Error(currentChallange.challengeType)
+                    alert("Unknown problem type: " + currentChallange.challengeInfo.type);
+                    throw new Error(currentChallange.challengeInfo.type)
                 }
                 await solve();
 
@@ -70,7 +70,7 @@ window.addEventListener("LessonStatusChanged", async function (e) {
             footer.classList.add("autolingo-footer-div");
             footer.classList.add(className);
             if (!solve) {
-                window.console.logger("cant solve " + currentChallange.challengeType)
+                window.console.logger("cant solve " + currentChallange.challengeInfo.type)
             } else
             if (!footer.querySelector("button.autolingo-solve")) {
                 let checkButtonSection = footer.querySelector("div").querySelector("div");

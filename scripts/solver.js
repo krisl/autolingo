@@ -1,7 +1,6 @@
 class DuolingoChallenge {
     constructor(internalInfo) {
         this.challengeInfo = internalInfo;
-        this.challengeType = internalInfo.type;
     }
 
     static get isKeyboardEnabled() {
@@ -17,7 +16,7 @@ class DuolingoChallenge {
     }
 
     printDebugInfo() {
-        window.console.logger("challengeType: " + this.challengeType);
+        window.console.logger("challengeType: " + this.challengeInfo.type);
         window.console.logger(this.challengeInfo);
     }
 
@@ -61,7 +60,7 @@ class DuolingoChallenge {
 
     // Methods for solving the problems.
     get_async_solver() {
-        switch (this.challengeType) {
+        switch (this.challengeInfo.type) {
             case "dialogue":
             case "readComprehension":
             case "characterIntro":
@@ -189,7 +188,7 @@ class DuolingoChallenge {
         }
 
         let correctIndex = this.challengeInfo.correctIndex;
-        let dataTest = dataTestByChallengeType[this.challengeType];
+        let dataTest = dataTestByChallengeType[this.challengeInfo.type];
         this.constructor.getElementsByDataTest(dataTest)[correctIndex].click();
         await sleep();
     }
@@ -232,7 +231,7 @@ class DuolingoChallenge {
             "transliterate": "challenge-text-input"
         }
 
-        let dataTest = dataTextByChallengeType[this.challengeType];
+        let dataTest = dataTextByChallengeType[this.challengeInfo.type];
         this.constructor.insertText(dataTest, solution);
     }
 
