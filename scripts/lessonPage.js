@@ -1,28 +1,10 @@
 // This code get executed when a lesson like page is loaded.
 // It execute all the solver related code.
 
-window.addEventListener("DuolingoRefresh", function (e) {
-    const possiblePageLikeTerms = ["lesson", "practice", "alphabets", "placement"];
-    if (window.activeInterval) { window.clearInterval(window.activeInterval); delete window.activeInterval }
-    if (!possiblePageLikeTerms.some((t) => e.detail.path.includes(t))) return true;
-
-    // Watch the change in the status of the challenge.
-    let prevLessonStatus = undefined;
-    window.activeInterval = window.setInterval(function () {
-        const lessonNode = document.querySelector("._3yE3H");
-        const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
-        let currentStatus = pageData?.player?.status;
-        if (prevLessonStatus === currentStatus) return;
-
-        prevLessonStatus = currentStatus;
-        let eventInfo = new CustomEvent("LessonStatusChanged", { detail: pageData });
-        return window.dispatchEvent(eventInfo);
-    }, 200);
-});
-
 window.addEventListener("LessonStatusChanged", async function ({ detail: pageData }) {
-    console.logger("currentStatus: " + pageData.player.status);
-    switch (pageData.player.status) {
+    const playerStatus = pageData.player?.status
+    console.logger("currentStatus: " + playerStatus);
+    switch (playerStatus) {
         case "GUESSING":
             let currentChallange = new DuolingoChallenge(pageData);
             const solve = currentChallange.get_async_solver();
@@ -118,6 +100,6 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
             break;
 
         default:
-            console.logger("Unknown lesson status: " + e.detail.currentStatus);
+            console.logger("Unknown lesson status: " + playerStatus);
     }
 })
