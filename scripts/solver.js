@@ -7,7 +7,7 @@ class DuolingoChallenge {
     get isKeyboardEnabled() {
         // Parent object contains several information about current duolingo status;
         let parentObject = this.challengeToggleState;
-        return (parentObject.canToggleTyping && parentObject.isToggledToTyping)
+        return (parentObject.isToggledToTyping)
     }
 
     static getElementsByDataTest(dataTest, parent = window.document) {
