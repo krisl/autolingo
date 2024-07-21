@@ -26,8 +26,7 @@ window.addEventListener("LessonStatusChanged", async function (e) {
         case "GUESSING":
             const lessonNode = document.querySelector("._3yE3H");
             const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
-            let challengeInternalInfo = pageData.currentChallenge;
-            let currentChallange = new DuolingoChallenge(challengeInternalInfo);
+            let currentChallange = new DuolingoChallenge(pageData);
             const solve = currentChallange.get_async_solver();
             async function handleSolve() {
                 currentChallange.printDebugInfo();

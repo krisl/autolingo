@@ -1,13 +1,12 @@
 class DuolingoChallenge {
-    constructor(internalInfo) {
-        this.challengeInfo = internalInfo;
+    constructor(pageData) {
+        this.challengeInfo = pageData.currentChallenge;
+        this.challengeToggleState = pageData.challengeToggleState
     }
 
-    static get isKeyboardEnabled() {
+    get isKeyboardEnabled() {
         // Parent object contains several information about current duolingo status;
-        const lessonNode = document.querySelector("._3yE3H");
-        const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
-        let parentObject = pageData.challengeToggleState;
+        let parentObject = this.challengeToggleState;
         return (parentObject.canToggleTyping && parentObject.isToggledToTyping)
     }
 
@@ -81,7 +80,7 @@ class DuolingoChallenge {
             case "read_comprehension":
             case "translate":
             case "listenTap":
-                return () => this.constructor.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveTapTextTypeProblems();
+                return () => this.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveTapTextTypeProblems();
 
             case "transliterate":
                 return () => this.solveWriteTextInSomeTextFieldTypeProblems();
