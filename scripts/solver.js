@@ -148,10 +148,7 @@ class DuolingoChallenge {
     } 
 
     solveFromNearbyElements() {
-        let correctAnswer = parent.document.querySelector(".caPDQ").textContent
-
-        //remove first and last character
-        correctAnswer = correctAnswer.substring(1, correctAnswer.length - 1);
+        const correctAnswer = this.challengeInfo.displayTokens.find(dt => dt.isBlank).text
 
         let textField = this.constructor.getElementsByDataTest("challenge-text-input")[0];
         window.getReactElement(textField)?.pendingProps?.onChange({ target: { value: correctAnswer } });
