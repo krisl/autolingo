@@ -15,17 +15,15 @@ window.addEventListener("DuolingoRefresh", function (e) {
         if (prevLessonStatus === currentStatus) return;
 
         prevLessonStatus = currentStatus;
-        let eventInfo = new CustomEvent("LessonStatusChanged", { detail: { currentStatus } });
+        let eventInfo = new CustomEvent("LessonStatusChanged", { detail: pageData });
         return window.dispatchEvent(eventInfo);
     }, 200);
 });
 
-window.addEventListener("LessonStatusChanged", async function (e) {
-    console.logger(e.detail.currentStatus);
-    switch (e.detail.currentStatus) {
+window.addEventListener("LessonStatusChanged", async function ({ detail: pageData }) {
+    console.logger("currentStatus: " + pageData.player.status);
+    switch (pageData.player.status) {
         case "GUESSING":
-            const lessonNode = document.querySelector("._3yE3H");
-            const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
             let currentChallange = new DuolingoChallenge(pageData);
             const solve = currentChallange.get_async_solver();
             async function handleSolve() {
