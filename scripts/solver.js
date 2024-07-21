@@ -60,7 +60,7 @@ class DuolingoChallenge {
     }
 
     // Methods for solving the problems.
-    async solve() {
+    get_async_solver() {
         switch (this.challengeType) {
             case "dialogue":
             case "readComprehension":
@@ -72,61 +72,49 @@ class DuolingoChallenge {
             case "gapFill":
             case "reverseAssist":
             case "transliterationAssist":
-                this.solveSelectCorrectIndexTypeProblems();
-                break;
+                return () => this.solveSelectCorrectIndexTypeProblems();
 
             case "characterMatch":
             case "match":
-                await this.solveCharacterMatch();
-                break;
+                return () => this.solveCharacterMatch();
             
             case "tapComplete":
             case "read_comprehension":
             case "translate":
             case "listenTap":
-                this.constructor.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : await this.solveTapTextTypeProblems();
-                break;
+                return () => this.constructor.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveTapTextTypeProblems();
 
             case "transliterate":
-                this.solveWriteTextInSomeTextFieldTypeProblems();
-                break;
+                return () => this.solveWriteTextInSomeTextFieldTypeProblems();
 
             //case "speak":
             //    await sleep();
             //    this.constructor.clickButtonSkip();
             //    break;
 
-            case "characterTrace":
-            case "characterWrite":
-                alert("The extension can't solve this problem. Please do it manually and we'll be able to continue.");
-                console.logger("Waiting for user interaction");
-                break;
+            //case "characterTrace":
+            //case "characterWrite":
+            //    alert("The extension can't solve this problem. Please do it manually and we'll be able to continue.");
+            //    console.logger("Waiting for user interaction");
+            //    break;
 
             case "listenComprehension":
             case "listenIsolation":
-                await this.solveListenIsolation();
-                break;
+                return () => this.solveListenIsolation();
 
             case "listen":
-                this.writeTextInSpace();
-                break;
+                return () => this.writeTextInSpace();
 
             case "listenComplete":
             case "completeReverseTranslation":
-                this.solveFromNearbyElements();
-                break;
+                return () => this.solveFromNearbyElements();
             case "partialReverseTranslate":
-                this.solveFromNearbyElementsButForPartialReverseTranslate();
-                break;
+                return () => this.solveFromNearbyElementsButForPartialReverseTranslate();
 
             //TODO: This is only commented because I don't have any problem to test it with
             // case "typeCloze":
             //     this.solveFromNearbyElementsButForTypeCloze();
             //     break;
-
-            default:
-                alert("Unknown problem type: " + this.challengeType);
-                throw new Error(this.challengeType)
         }
     }
     solveFromNearbyElementsButForPartialReverseTranslate() {

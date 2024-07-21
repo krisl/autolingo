@@ -31,7 +31,13 @@ window.addEventListener("LessonStatusChanged", async function (e) {
                 let currentChallange = new DuolingoChallenge(challengeInternalInfo);
                 currentChallange.printDebugInfo();
 
-                await currentChallange.solve();
+                const solve = currentChallange.get_async_solver();
+                if (!solve) {
+                    alert("Unknown problem type: " + currentChallange.challengeType);
+                    throw new Error(currentChallange.challengeType)
+                }
+                await solve();
+
                 await sleep();
                 DuolingoChallenge.clickButtonCheck();
             }
