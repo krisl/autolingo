@@ -48,16 +48,16 @@ window.addEventListener("LessonStatusChanged", async function (e) {
             let className = document.location.pathname.includes("test") ? "unit_test" : document.location.pathname.split("/").at(1);
             progressBarContainer.classList.add(className);
 
-            if (!progressBarContainer["autolingo_solve_button_inserted"]) {
-                let button = document.querySelector("button[data-test='quit-button']").cloneNode(true);
-                button.classList.add("autolingo-autosolve");
-                button.removeAttribute("data-test");
-                button.setAttribute("title", "Start autosolving");
-                button.addEventListener("click", handleAutosolveRequest);
-                progressBarContainer.insertBefore(button, progressBarContainer.querySelector("div[role='progressbar']"));
-                progressBarContainer["autolingo_solve_button_inserted"] = true;
-                console.logger("Button inserted");
-            };
+            //if (!progressBarContainer["autolingo_solve_button_inserted"]) {
+            //    let button = document.querySelector("button[data-test='quit-button']").cloneNode(true);
+            //    button.classList.add("autolingo-autosolve");
+            //    button.removeAttribute("data-test");
+            //    button.setAttribute("title", "Start autosolving");
+            //    button.addEventListener("click", handleAutosolveRequest);
+            //    progressBarContainer.insertBefore(button, progressBarContainer.querySelector("div[role='progressbar']"));
+            //    progressBarContainer["autolingo_solve_button_inserted"] = true;
+            //    console.logger("Button inserted");
+            //};
 
             // Insert button for solve this problem.
             const footer = document.getElementById("session/PlayerFooter");
