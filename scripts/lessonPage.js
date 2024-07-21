@@ -17,7 +17,7 @@ window.addEventListener("DuolingoRefresh", function (e) {
         prevLessonStatus = currentStatus;
         let eventInfo = new CustomEvent("LessonStatusChanged", { detail: { currentStatus } });
         return window.dispatchEvent(eventInfo);
-    }, 10);
+    }, 200);
 });
 
 window.addEventListener("LessonStatusChanged", async function (e) {
