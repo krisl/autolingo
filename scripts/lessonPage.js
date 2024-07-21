@@ -9,8 +9,9 @@ window.addEventListener("DuolingoRefresh", function (e) {
     // Watch the change in the status of the challenge.
     let prevLessonStatus = undefined;
     window.activeInterval = window.setInterval(function () {
-        const lessonNode = document.querySelector("#root > div > div");
-        let currentStatus = window.getReactElement(lessonNode)?.return?.stateNode?.props?.player?.status;
+        const lessonNode = document.querySelector("._3yE3H");
+        const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
+        let currentStatus = pageData?.player?.status;
         if (prevLessonStatus === currentStatus) return;
 
         prevLessonStatus = currentStatus;
@@ -24,8 +25,9 @@ window.addEventListener("LessonStatusChanged", async function (e) {
     switch (e.detail.currentStatus) {
         case "GUESSING":
             async function handleSolve() {
-                const lessonNode = document.querySelector("#root > div > div");
-                let challengeInternalInfo = window.getReactElement(lessonNode).return.stateNode.props.currentChallenge;
+                const lessonNode = document.querySelector("._3yE3H");
+                const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
+                let challengeInternalInfo = pageData.currentChallenge;
                 let currentChallange = new DuolingoChallenge(challengeInternalInfo);
                 currentChallange.printDebugInfo();
 

@@ -2,14 +2,10 @@
 // When a change is detected, it dispatch an event.
 
 let prevCourse = null;
-let prevTab = null;
 setInterval(function () {
-    const parentNode = document.querySelector("#root > div:nth-child(2) > div > div:nth-child(2)");
-    const pageData = window.getReactElement(parentNode)?.return?.return?.return?.memoizedProps;
-    const tab = pageData?.activeTab ?? "unknown";
-    const course = pageData?.courses?.find((e) => e.isCurrent)?.courseId;
+    const pageData = window.getReactElement(document.querySelector("._3yE3H"))?.return?.return?.memoizedProps;
+    const course = pageData?.course.id;
 
-    if (prevTab !== tab || prevCourse !== course) { window.dispatchEvent(new CustomEvent("DuolingoRefresh", { detail: { tab, path: document.location.pathname } })) };
+    if (prevCourse !== course) { window.dispatchEvent(new CustomEvent("DuolingoRefresh", { detail: { course, path: document.location.pathname } })) };
     prevCourse = course;
-    prevTab = tab;
-}, 10);
+}, 500);
