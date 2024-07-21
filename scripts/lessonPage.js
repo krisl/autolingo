@@ -69,7 +69,10 @@ window.addEventListener("LessonStatusChanged", async function (e) {
             const footer = document.getElementById("session/PlayerFooter");
             footer.classList.add("autolingo-footer-div");
             footer.classList.add(className);
-            if (solve && !footer.querySelector("button.autolingo-solve")) {
+            if (!solve) {
+                window.console.logger("cant solve " + currentChallange.challengeType)
+            } else
+            if (!footer.querySelector("button.autolingo-solve")) {
                 let checkButtonSection = footer.querySelector("div").querySelector("div");
                 let button = checkButtonSection.querySelector("button").cloneNode(true);
     
