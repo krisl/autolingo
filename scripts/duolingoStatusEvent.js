@@ -19,5 +19,7 @@ setInterval(function () {
     if (prevPlayerStatus === playerStatus) return;
 
     prevPlayerStatus = playerStatus;
-    return window.dispatchEvent(new CustomEvent("LessonStatusChanged", { detail: pageData }));
+    if (playerStatus) {
+        window.dispatchEvent(new CustomEvent("LessonStatusChanged", { detail: pageData }));
+    }
 }, 500);
