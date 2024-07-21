@@ -24,14 +24,14 @@ window.addEventListener("LessonStatusChanged", async function (e) {
     console.logger(e.detail.currentStatus);
     switch (e.detail.currentStatus) {
         case "GUESSING":
+            const lessonNode = document.querySelector("._3yE3H");
+            const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
+            let challengeInternalInfo = pageData.currentChallenge;
+            let currentChallange = new DuolingoChallenge(challengeInternalInfo);
+            const solve = currentChallange.get_async_solver();
             async function handleSolve() {
-                const lessonNode = document.querySelector("._3yE3H");
-                const pageData = window.getReactElement(lessonNode)?.return?.return?.memoizedProps;
-                let challengeInternalInfo = pageData.currentChallenge;
-                let currentChallange = new DuolingoChallenge(challengeInternalInfo);
                 currentChallange.printDebugInfo();
 
-                const solve = currentChallange.get_async_solver();
                 if (!solve) {
                     alert("Unknown problem type: " + currentChallange.challengeType);
                     throw new Error(currentChallange.challengeType)
@@ -69,7 +69,7 @@ window.addEventListener("LessonStatusChanged", async function (e) {
             const footer = document.getElementById("session/PlayerFooter");
             footer.classList.add("autolingo-footer-div");
             footer.classList.add(className);
-            if (!footer.querySelector("button.autolingo-solve")) {
+            if (solve && !footer.querySelector("button.autolingo-solve")) {
                 let checkButtonSection = footer.querySelector("div").querySelector("div");
                 let button = checkButtonSection.querySelector("button").cloneNode(true);
     
