@@ -91,10 +91,10 @@ class DuolingoChallenge {
                 this.solveWriteTextInSomeTextFieldTypeProblems();
                 break;
 
-            case "speak":
-                await sleep();
-                this.constructor.clickButtonSkip();
-                break;
+            //case "speak":
+            //    await sleep();
+            //    this.constructor.clickButtonSkip();
+            //    break;
 
             case "characterTrace":
             case "characterWrite":
