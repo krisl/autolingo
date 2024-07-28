@@ -6,11 +6,11 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
     console.logger("currentStatus: " + playerStatus);
     switch (playerStatus) {
         case "GUESSING":
-            let currentChallange = new DuolingoChallenge(pageData);
+            const currentChallange = new DuolingoChallenge(pageData);
+            currentChallange.printDebugInfo();
             const solve = currentChallange.get_async_solver();
-            async function handleSolve() {
+            const handleSolve = async () => {
                 currentChallange.printDebugInfo();
-
                 if (!solve) {
                     alert("Unknown problem type: " + currentChallange.challengeInfo.type);
                     throw new Error(currentChallange.challengeInfo.type)
