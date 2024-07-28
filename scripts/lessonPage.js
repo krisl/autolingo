@@ -18,7 +18,7 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
                 await solve();
 
                 await sleep();
-                DuolingoChallenge.clickButtonCheck();
+                //DuolingoChallenge.clickButtonCheck();
             }
 
             function handleAutosolveRequest() {
