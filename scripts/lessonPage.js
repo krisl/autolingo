@@ -48,17 +48,31 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
             const footer = document.getElementById("session/PlayerFooter");
             footer.classList.add("autolingo-footer-div");
             footer.classList.add(className);
+            // remove any old buttons
+            footer.querySelector("button.autolingo-solve")?.remove()
+            footer.querySelector("div.autolingo-buttonsection")?.remove()
             if (!solve) {
                 window.console.logger("cant solve " + currentChallange.challengeInfo.type)
             } else
             if (!footer.querySelector("button.autolingo-solve")) {
-                let checkButtonSection = footer.querySelector("div").querySelector("div");
-                let button = checkButtonSection.querySelector("button").cloneNode(true);
+                //FIXME just make our own button
+                const button = footer.querySelector("[data-test='player-next']").cloneNode(true);
+                button.removeAttribute("data-test") // dont accidentally click button
+                button.classList.remove("_1NM1Q") // ensure button is green
     
                 button.childNodes[0].innerText = "Solve"
                 button.getAttribute("data-test") === "player-next" ? button.classList.remove(button.classList[0]) : null;
                 button.classList.add("autolingo-solve");
                 button.addEventListener("click", handleSolve);
+                // outer div classes when 3 child elements class="U8jH3 jHbiF"
+                let checkButtonSection = footer.querySelector("div").querySelector("div._3h0lA");
+                if (!checkButtonSection) {
+                    window.console.logger("creating a new button section")
+                    checkButtonSection = document.createElement('div')
+                    checkButtonSection.classList.add("autolingo-buttonsection");
+                    footer.querySelector("div").prepend(checkButtonSection);
+                }
+               
                 checkButtonSection.appendChild(button);    
 
                 //footer["autolingo_solve_button_inserted"] = true;

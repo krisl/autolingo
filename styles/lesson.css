@@ -33,3 +33,11 @@ button.autolingo-autosolve {
 button.autolingo-solve {
     margin-top: 10px;
 }
+
+div.autolingo-buttonsection {
+    display: none;
+}
+
+div.autolingo-footer-div div.autolingo-buttonsection {
+    display: block;
+}
