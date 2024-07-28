@@ -20,6 +20,7 @@ setInterval(function () {
 
     prevPlayerStatus = playerStatus;
     if (playerStatus) {
+        console.log(new Date().toISOString(), "Dispatching event", pageData)
         window.dispatchEvent(new CustomEvent("LessonStatusChanged", { detail: pageData }));
     }
 }, 500);

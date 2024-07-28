@@ -5,7 +5,7 @@ const frameElement = document.createElement("iframe");
 frameElement.style.display = "none";
 document.body.appendChild(frameElement);
 console.logger = (isDebugMode) ?
-    (...content) => { frameElement.contentWindow.console.log(...content) } :
+    (...content) => { frameElement.contentWindow.console.log(new Date().toISOString(), ...content) } :
     () => { };
 
 // Define getReactElement() function so we can get internal react instance info.
