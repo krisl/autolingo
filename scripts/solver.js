@@ -245,7 +245,7 @@ class DuolingoChallenge {
             let tokensText = this.extractTextFromNodes(avaibleButtons);
 
             tokensText[token].click();
-            await sleep();
+            await sleep(this.challengeInfo.targetLanguage !== 'en' ? 600 : 0);
         }
     }
 
