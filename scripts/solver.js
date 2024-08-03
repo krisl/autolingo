@@ -105,8 +105,9 @@ class DuolingoChallenge {
                 return () => this.writeTextInSpace();
 
             case "listenComplete":
-            case "completeReverseTranslation":
                 return () => this.solveFromNearbyElements();
+            case "completeReverseTranslation":
+                return () => this.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveFromNearbyElements();
             case "partialReverseTranslate":
                 return () => this.solveFromNearbyElementsButForPartialReverseTranslate();
 
@@ -217,6 +218,9 @@ class DuolingoChallenge {
                 case "translate":
                     return this.challengeInfo.correctSolutions[0];
 
+                case "complete_reverse_translation":
+                    return this.challengeInfo.challengeResponseTrackingProperties.best_solution;
+
                 default:
                     alert("Unknown translate problem type: " + this.specificTranslateType);
                     throw new Error(this.specificTranslateType);
@@ -226,7 +230,8 @@ class DuolingoChallenge {
         const dataTextByChallengeType = {
             "translate": "challenge-translate-input",
             "listenTap": "challenge-translate-input",
-            "transliterate": "challenge-text-input"
+            "transliterate": "challenge-text-input",
+            "completeReverseTranslation": "challenge-translate-input"
         }
 
         let dataTest = dataTextByChallengeType[this.challengeInfo.type];
