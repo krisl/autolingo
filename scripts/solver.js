@@ -118,8 +118,17 @@ class DuolingoChallenge {
         }
     }
     solveFromNearbyElementsButForPartialReverseTranslate() {
+        const altCorrectAnswer = this.challengeInfo.displayTokens.filter(dt => dt.isBlank).map(dt => dt.text).join('')
         const correctAnswer = parent.document.querySelector("._2pNyl._3qrJ_.Id-Wa").textContent
+        window.console.logger({altCorrectAnswer, correctAnswer})
+        window.console.logger(altCorrectAnswer === correctAnswer)
+
+        const altInputElement = window.document.querySelector("[data-test='challenge challenge-partialReverseTranslate'] [contenteditable=true]")
         let inputElement = parent.document.querySelector("._2EMkI._2i8FG._3qrJ_.tapBI._1W1IX");
+
+        window.console.logger({altInputElement, inputElement})
+        window.console.logger(altInputElement === inputElement)
+
         inputElement.textContent = correctAnswer;
     
         // Create a new 'input' event
