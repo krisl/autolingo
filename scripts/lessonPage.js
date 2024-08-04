@@ -26,12 +26,12 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
             }
 
             // Insert button for autosolve lesson.
-            const progressBarContainer = document.querySelector("button[data-test='quit-button']").parentNode;
+            //const progressBarContainer = document.querySelector("button[data-test='quit-button']").parentNode;
 
-            // Classes for styling
-            progressBarContainer.classList.add("autolingo-progress-bar");
-            let className = document.location.pathname.includes("test") ? "unit_test" : document.location.pathname.split("/").at(1);
-            progressBarContainer.classList.add(className);
+            //// Classes for styling
+            //progressBarContainer.classList.add("autolingo-progress-bar");
+            //let className = document.location.pathname.includes("test") ? "unit_test" : document.location.pathname.split("/").at(1);
+            //progressBarContainer.classList.add(className);
 
             //if (!progressBarContainer["autolingo_solve_button_inserted"]) {
             //    let button = document.querySelector("button[data-test='quit-button']").cloneNode(true);
@@ -47,7 +47,7 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
             // Insert button for solve this problem.
             const footer = document.getElementById("session/PlayerFooter");
             footer.classList.add("autolingo-footer-div");
-            footer.classList.add(className);
+            //footer.classList.add(className);
             // remove any old buttons
             footer.querySelector("button.autolingo-solve")?.remove()
             footer.querySelector("div.autolingo-buttonsection")?.remove()
