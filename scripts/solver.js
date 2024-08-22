@@ -81,6 +81,7 @@ class DuolingoChallenge {
             case "read_comprehension":
             case "translate":
             case "listenTap":
+            case "name":
                 return () => this.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveTapTextTypeProblems();
 
             case "transliterate":
@@ -225,6 +226,7 @@ class DuolingoChallenge {
                 case "reverse_translate":
                 case "transliterate":
                 case "translate":
+                case "name":
                     return this.challengeInfo.correctSolutions[0];
 
                 case "complete_reverse_translation":
@@ -240,6 +242,7 @@ class DuolingoChallenge {
             "translate": "challenge-translate-input",
             "listenTap": "challenge-translate-input",
             "transliterate": "challenge-text-input",
+            "type": "challenge-text-input",
             "completeReverseTranslation": "challenge-translate-input"
         }
 
