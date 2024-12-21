@@ -269,7 +269,8 @@ class DuolingoChallenge {
             let tokensText = this.extractTextFromNodes(avaibleButtons);
 
             tokensText[token].click();
-            if (specificTypeProblem == 'reverse_tap') {
+            if (specificTypeProblem == 'reverse_tap' || specificTypeProblem == 'listen_tap') {
+                Howler._howls.forEach(howl => console.logger(howl.state()))
                 await sleep(10);
                 const howl = Howler._howls.find(obj => obj.playing())
                 if (howl) {
@@ -277,7 +278,7 @@ class DuolingoChallenge {
                     const currentPos = howl.seek()
                     const remainingSeconds = duration - currentPos 
                     console.logger("playing audio", {duration, currentPos, remainingSeconds})
-                    await sleep(Math.max(0, (remainingSeconds * 1000) - 950));
+                    await sleep(Math.max(200, (remainingSeconds * 1000) - 200));
                 }
             }
         }
