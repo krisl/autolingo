@@ -257,6 +257,9 @@ class DuolingoChallenge {
         // This method clicks the correct button from an array of possible buttons in the order required.
         // It uses the "._3CBig" class to identify possible buttons.
 
+        const specificTypeProblem = this.challengeInfo.challengeGeneratorIdentifier.specificType;
+        const targetLanguage = this.challengeInfo.targetLanguage
+        console.logger({targetLanguage, specificTypeProblem})
         let correctTokens = this.challengeInfo.correctTokens ?? this.challengeInfo.prompt.split("") ?? this.challengeInfo.correctIndices;
         let wordBank = this.constructor.getElementsByDataTest("word-bank")[0];
         let buttonUnpressedClasses = wordBank.querySelector("button").classList.toString();
@@ -266,7 +269,17 @@ class DuolingoChallenge {
             let tokensText = this.extractTextFromNodes(avaibleButtons);
 
             tokensText[token].click();
-            await sleep(this.challengeInfo.targetLanguage !== 'en' ? 600 : 0);
+            if (specificTypeProblem == 'reverse_tap') {
+                await sleep(10);
+                const howl = Howler._howls.find(obj => obj.playing())
+                if (howl) {
+                    const duration = howl.duration()
+                    const currentPos = howl.seek()
+                    const remainingSeconds = duration - currentPos 
+                    console.logger("playing audio", {duration, currentPos, remainingSeconds})
+                    await sleep(Math.max(0, (remainingSeconds * 1000) - 950));
+                }
+            }
         }
     }
 
