@@ -8,7 +8,9 @@ class DuolingoChallenge {
         // Parent object contains several information about current duolingo status;
         const pageData = window.getReactElement(document.querySelector("._3yE3H"))?.return?.return?.memoizedProps;
         let parentObject = pageData.challengeToggleState;
-        return (parentObject.isToggledToTyping)
+        const result = (parentObject.isToggledToTyping)
+        window.console.logger({isKeyboardEnabled: result})
+        return result
     }
 
     static getElementsByDataTest(dataTest, parent = window.document) {
@@ -238,6 +240,7 @@ class DuolingoChallenge {
             }
         })();
 
+        window.console.logger({solution});
         const dataTextByChallengeType = {
             "translate": "challenge-translate-input",
             "listenTap": "challenge-translate-input",

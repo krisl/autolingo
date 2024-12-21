@@ -8,6 +8,7 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
         case "GUESSING":
             const currentChallange = new DuolingoChallenge(pageData);
             currentChallange.printDebugInfo();
+	  window.console.logger('hi', {pageData})
             const solve = currentChallange.get_async_solver();
             const handleSolve = async () => {
                 currentChallange.printDebugInfo();
