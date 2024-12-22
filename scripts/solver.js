@@ -245,11 +245,16 @@ class DuolingoChallenge {
             "translate": "challenge-translate-input",
             "listenTap": "challenge-translate-input",
             "transliterate": "challenge-text-input",
+            "name": "challenge-text-input",
             "type": "challenge-text-input",
             "completeReverseTranslation": "challenge-translate-input"
         }
 
-        let dataTest = dataTextByChallengeType[this.challengeInfo.type];
+        const dataTest = dataTextByChallengeType[this.challengeInfo.type];
+  	if (!dataTest) {
+            console.logger(`couldnt obtain data-test attribute for challenge info type '${this.challengeInfo.type}'`)
+            return
+        }
         this.constructor.insertText(dataTest, solution);
     }
 
