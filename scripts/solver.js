@@ -275,15 +275,19 @@ class DuolingoChallenge {
 
             tokensText[token].click();
             if (specificTypeProblem == 'reverse_tap' || specificTypeProblem == 'listen_tap') {
-                Howler._howls.forEach(howl => console.logger(howl.state()))
-                await sleep(10);
+                console.logger("H", Howler._howls)
+                await sleep(200);
                 const howl = Howler._howls.find(obj => obj.playing())
                 if (howl) {
                     const duration = howl.duration()
                     const currentPos = howl.seek()
                     const remainingSeconds = duration - currentPos 
                     console.logger("playing audio", {duration, currentPos, remainingSeconds})
-                    await sleep(Math.max(200, (remainingSeconds * 1000) - 200));
+                    const silence = this.challengeInfo.targetLanguage == 'it' ? 900 : 200
+                    await sleep(Math.max(200, (remainingSeconds * 1000) - silence));
+                } else {
+                    console.logger("Nothingn playing")
+                    await sleep(1000);
                 }
             }
         }
