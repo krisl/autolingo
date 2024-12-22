@@ -59,7 +59,8 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
                 //FIXME just make our own button
                 const button = footer.querySelector("[data-test='player-next']").cloneNode(true);
                 button.removeAttribute("data-test") // dont accidentally click button
-                button.classList.remove("_1NM1Q") // ensure button is green
+                button.classList.remove("_2wryV") // ensure button is green
+                button.classList.remove("_2oGJR") // ensure button is blue
     
                 button.childNodes[0].innerText = "Solve"
                 button.getAttribute("data-test") === "player-next" ? button.classList.remove(button.classList[0]) : null;
