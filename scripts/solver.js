@@ -20,6 +20,10 @@ class DuolingoChallenge {
     printDebugInfo() {
         window.console.logger("challengeType: " + this.challengeInfo.type);
         window.console.logger(this.challengeInfo);
+        const tts = this.challengeInfo.solutionTts
+        if (tts) {
+          window.console.logger('tts', tts);
+        }
     }
 
     extractTextFromNodes(nodes) {
@@ -240,7 +244,7 @@ class DuolingoChallenge {
             }
         })();
 
-        window.console.logger({solution});
+        window.console.logger({solution, tts: this.challengeInfo.solutionTts});
         const dataTextByChallengeType = {
             "translate": "challenge-translate-input",
             "listenTap": "challenge-translate-input",
@@ -256,6 +260,11 @@ class DuolingoChallenge {
             return
         }
         this.constructor.insertText(dataTest, solution);
+        const tts = this.challengeInfo.solutionTts
+        if (tts) {
+            const howl = new Howl({ html5: true, src: tts })
+            howl.play()
+        }
     }
 
     async solveTapTextTypeProblems() {
