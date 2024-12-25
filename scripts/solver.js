@@ -83,7 +83,6 @@ class DuolingoChallenge {
             case "match":
                 return () => this.solveCharacterMatch();
             
-            case "tapComplete":
             case "read_comprehension":
             case "translate":
             case "listenTap":
@@ -93,6 +92,8 @@ class DuolingoChallenge {
             case "transliterate":
                 return () => this.solveWriteTextInSomeTextFieldTypeProblems();
 
+            case "tapComplete":
+                return () => this.solveTapTextTypeProblems();
             //case "speak":
             //    await sleep();
             //    this.constructor.clickButtonSkip();
@@ -261,6 +262,7 @@ class DuolingoChallenge {
         }
         this.constructor.insertText(dataTest, solution);
         const tts = this.challengeInfo.solutionTts
+        // curl -v https://translate.googleapis.com/translate_tts\?client\=gtx\&ie-UTF-8\&tl\=it\&q\=ciao
         if (tts) {
             const howl = new Howl({ html5: true, src: tts })
             howl.play()
@@ -274,16 +276,17 @@ class DuolingoChallenge {
         const specificTypeProblem = this.challengeInfo.challengeGeneratorIdentifier.specificType;
         const targetLanguage = this.challengeInfo.targetLanguage
         console.logger({targetLanguage, specificTypeProblem})
-        let correctTokens = this.challengeInfo.correctTokens ?? this.challengeInfo.prompt.split("") ?? this.challengeInfo.correctIndices;
+        let correctTokens = this.challengeInfo.correctTokens ?? this.challengeInfo.prompt?.split("") ?? this.challengeInfo.correctIndices.map(i => this.challengeInfo.choices[i].text);
         let wordBank = this.constructor.getElementsByDataTest("word-bank")[0];
         let buttonUnpressedClasses = wordBank.querySelector("button").classList.toString();
+        const allPossibleButtons = Array.from(wordBank.querySelectorAll("button"));
+        console.logger({allPossibleButtons, correctTokens})
         for (let token of correctTokens) {
-            let allPossibleButtons = Array.from(wordBank.querySelectorAll("button"));
-            let avaibleButtons = allPossibleButtons.filter((e) => e.classList.toString() === buttonUnpressedClasses);
-            let tokensText = this.extractTextFromNodes(avaibleButtons);
-
+            const avaibleButtons = allPossibleButtons.filter((e) => e.classList.toString() === buttonUnpressedClasses);
+            const tokensText = this.extractTextFromNodes(avaibleButtons);
+            console.logger({avaibleButtons, tokensText})
             tokensText[token].click();
-            if (specificTypeProblem == 'reverse_tap' || specificTypeProblem == 'listen_tap') {
+            if (['tap_gap', 'reverse_tap', 'listen_tap'].includes(specificTypeProblem)) {
                 console.logger("H", Howler._howls)
                 await sleep(200);
                 const howl = Howler._howls.find(obj => obj.playing())
