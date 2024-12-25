@@ -295,7 +295,7 @@ class DuolingoChallenge {
                     const currentPos = howl.seek()
                     const remainingSeconds = duration - currentPos 
                     console.logger("playing audio", {duration, currentPos, remainingSeconds})
-                    const silence = this.challengeInfo.targetLanguage == 'it' ? 900 : 200
+                    const silence = ['it', 'zh', 'fr'].includes(this.challengeInfo.targetLanguage) ? 900 : 200
                     await sleep(Math.max(200, (remainingSeconds * 1000) - silence));
                 } else {
                     console.logger("Nothingn playing")
