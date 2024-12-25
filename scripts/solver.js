@@ -126,7 +126,7 @@ class DuolingoChallenge {
     }
     solveFromNearbyElementsButForPartialReverseTranslate() {
         const altCorrectAnswer = this.challengeInfo.displayTokens.filter(dt => dt.isBlank).map(dt => dt.text).join('')
-        const correctAnswer = parent.document.querySelector("._2pNyl._3qrJ_.Id-Wa").textContent
+        const correctAnswer = parent.document.querySelector("._2pNyl._32bZV.Id-Wa").textContent
         window.console.logger({altCorrectAnswer, correctAnswer})
         window.console.logger(altCorrectAnswer === correctAnswer)
 
