@@ -171,6 +171,12 @@ class DuolingoChallenge {
 
         let textField = this.constructor.getElementsByDataTest("challenge-text-input")[0];
         window.getReactElement(textField)?.pendingProps?.onChange({ target: { value: correctAnswer } });
+        console.logger({textField})
+        window.setTimeout(() => {
+            textField.previousElementSibling.remove() // why this doesnt remove the element?
+            textField.insertAdjacentHTML('beforeBegin', correctAnswer)
+            textField.remove()
+        }, 1);
     }
 
     async solveListenIsolation() {
