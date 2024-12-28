@@ -132,7 +132,7 @@ class DuolingoChallenge {
         window.console.logger(altCorrectAnswer === correctAnswer)
 
         const altInputElement = window.document.querySelector("[data-test='challenge challenge-partialReverseTranslate'] [contenteditable=true]")
-        let inputElement = parent.document.querySelector("._2EMkI._2i8FG._3qrJ_.tapBI._1W1IX");
+        let inputElement = parent.document.querySelector(".tapBI");
 
         window.console.logger({altInputElement, inputElement})
         window.console.logger(altInputElement === inputElement)
