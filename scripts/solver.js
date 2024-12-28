@@ -174,9 +174,8 @@ class DuolingoChallenge {
     }
 
     async solveListenIsolation() {
-        let correctIndex = this.challengeInfo.correctIndex;
-        let correctButton = parent.document.querySelectorAll("._3C_oC")[correctIndex];
-        correctButton.click();
+        const buttons = parent.document.querySelectorAll(".ufykF");
+        buttons[this.challengeInfo.correctIndex].click();
         await sleep();
     }
 
