@@ -95,6 +95,9 @@ class DuolingoChallenge {
             case "tapComplete":
                 return () => this.solveTapTextTypeProblems();
 
+            case "svgPuzzle":
+                return () => this.solveSvgPuzzle();
+
             case "characterTrace":
             case "characterWrite":
                 return () => this.solveCharacterWrite();
@@ -300,6 +303,24 @@ class DuolingoChallenge {
                     await sleep(1000);
                 }
             }
+        }
+    }
+
+    async solveSvgPuzzle() {
+        // svgPuzzle (e.g. Chinese 裙 = 衤 + 尹 + ...): tap radical pieces
+        // in correctIndices order. Buttons carry data-test="{text}-challenge-tap-token".
+        for (const idx of this.challengeInfo.correctIndices) {
+            const text = this.challengeInfo.choices[idx]?.text;
+            if (text == null) continue;
+            let btn = document.querySelector(`[data-test="${text}-challenge-tap-token"]`);
+            if (!btn) {
+                // Fallback: match by visible text among tap-token buttons.
+                const cands = Array.from(document.querySelectorAll('[data-test$="challenge-tap-token"]'));
+                btn = cands.find((b) => (b.textContent ?? "").includes(text));
+            }
+            window.console.logger({ svgPuzzleTap: text, found: !!btn });
+            btn?.click();
+            await sleep(300);
         }
     }
 
