@@ -373,27 +373,46 @@ class DuolingoChallenge {
             return;
         }
 
-        // 2. Replay strokes synthetically. Single attempt per stroke: a
-        // false-negative retry redraws an accepted stroke, which the quiz
-        // counts as a mistake. Abort after 3 consecutive rejects to save hearts.
-        const startIdx = this.findActiveStrokeIndex(strokes);
-        window.console.logger({ startIdx });
+        // 2. Replay strokes synthetically. Re-detect the quiz's active stroke
+        // before every draw and stop when nothing remains: extra strokes
+        // after completion count as mistakes (BLAMING). Single attempt per
+        // stroke; abort after 3 consecutive rejects to save hearts.
+        const drawn = new Set();
+        const track = { highlight: undefined }; // undefined=undetected, null=order mode, string=highlight class
+        let i = this.findActiveStrokeIndex(strokes, drawn, track);
+        window.console.logger({ startIdx: i });
         let rejects = 0;
-        for (let i = startIdx; i < strokes.length; i++) {
+        while (i >= 0 && i < strokes.length && drawn.size < strokes.length) {
+            if (!traceEl.isConnected) return;
+            const st = this.playerStatus();
+            if (st && st !== "GUESSING") {
+                window.console.logger({ stopOnStatus: st });
+                return;
+            }
             const before = this.snapshotStrokeSvg();
             const points = this.constructor.parseSvgPathToPoints(strokes[i].path, 24);
             await this.dispatchStroke(traceEl, points, strokes[i].path, 4);
-            const accepted = await this.waitForStrokeAccepted(traceEl, i, before);
-            if (!accepted) {
-                rejects++;
-                window.console.logger({ rejected: i, rejects });
-                if (rejects >= 3) {
-                    alert("Autolingo: stopping trace early (3 strokes not accepted) to save hearts. Finish manually, then Solve again.");
+            drawn.add(i);
+            await this.waitForStrokeAccepted(traceEl, i, before);
+            const next = this.findActiveStrokeIndex(strokes, drawn, track);
+            if (track.highlight) {
+                // Highlight must move (or vanish = complete). Unmoved = invalid stroke.
+                if (next === i) {
+                    rejects++;
+                    window.console.logger({ rejected: i, rejects });
+                    if (rejects >= 3) {
+                        alert("Autolingo: stopping trace early (3 strokes not accepted) to save hearts. Finish manually, then Solve again.");
+                        return;
+                    }
+                } else {
+                    rejects = 0;
+                }
+                if (next < 0) {
+                    window.console.logger({ traceComplete: true });
                     return;
                 }
-            } else {
-                rejects = 0;
             }
+            i = next;
         }
     }
 
@@ -533,52 +552,74 @@ class DuolingoChallenge {
         );
     }
 
-    findActiveStrokeIndex(strokes) {
-        // Partially-drawn chars: completed/active/todo guides have distinct
-        // classes (seen: _1e5Zt done?, _22UPm active?, _287Na todo?).
-        // Scope to the trace svg (excludes speaker icon paths). The active
-        // stroke is the signature with the smallest nonzero count (usually 1);
-        // all-same => fresh char => 0.
+    playerStatus() {
         try {
+            const el = document.querySelector("._3yE3H");
+            const pd = el && window.getReactElement(el)?.return?.return?.memoizedProps;
+            return pd?.player?.status ?? null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    findActiveStrokeIndex(strokes, drawn = new Set(), track = {}) {
+        // Two modes, decided once per challenge:
+        // - highlight mode: some guide has a singleton class (the highlighted
+        //   active stroke). Follow it: draw its stroke; when it moves, draw
+        //   the next; when it vanishes, the trace is complete (-1).
+        // - order mode: all guides look the same (fresh char). Draw smallest
+        //   undrawn index (stroke order) until status/disconnect stops us.
+        // Never redraws a drawn stroke. Returns -1 when nothing remains.
+        try {
+            const norm = (s) => (s ?? "").replace(/\s+/g, " ").trim();
+            const strokeDs = strokes.map((s) => norm(s.path));
             const svg = this.strokeSvgRoot();
             const scope = svg ?? document.querySelector("[data-test='challenge challenge-characterWrite'], [data-test='challenge challenge-characterTrace']") ?? document;
-            const guides = Array.from(scope.querySelectorAll("svg path, path")).filter((p) => {
-                const d = (p.getAttribute("d") ?? "").trim();
-                // Drop grid lines (straight H/V commands); stroke paths use M/C only.
-                return d.length > 20 && !/[HVhv]/.test(d);
-            });
-            const sig = guides.map((p) => `${p.getAttribute("class")}`);
-            const counts = {};
-            sig.forEach((s) => { counts[s] = (counts[s] ?? 0) + 1; });
-            window.console.logger({ guideClasses: Object.entries(counts), guideCount: guides.length });
-            const strokeSigs = Object.entries(counts).filter(([s]) => !/speaker|lottie/i.test(s));
-            if (strokeSigs.length <= 1) return 0;
-            // Active = rarest signature (usually exactly 1 highlighted stroke).
-            strokeSigs.sort((a, b) => a[1] - b[1]);
-            const activeSig = strokeSigs[0][0];
-            const activeGuideIdx = sig.indexOf(activeSig);
-            const norm = (s) => (s ?? "").replace(/\s+/g, " ").trim();
-            const activeD = norm(guides[activeGuideIdx]?.getAttribute("d"));
-            // Exact match first, then start-point match (precision can differ).
-            let strokeIdx = strokes.findIndex((s) => norm(s.path) === activeD);
-            if (strokeIdx < 0) {
-                const m = activeD.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
-                if (m) {
+            const seen = new Map(); // strokeIdx -> {sig}
+            for (const p of Array.from(scope.querySelectorAll("svg path, path"))) {
+                const d = norm(p.getAttribute("d"));
+                if (d.length <= 20 || /[HVhv]/.test(d)) continue; // grid lines
+                let idx = strokeDs.indexOf(d);
+                if (idx < 0) {
+                    // Start-point fallback (numeric precision can differ).
+                    const m = d.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
+                    if (!m) continue;
                     const [ax, ay] = m[0].split(",").map(Number);
-                    strokeIdx = strokes.findIndex((s) => {
+                    idx = strokes.findIndex((s) => {
                         const sm = norm(s.path).match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
                         if (!sm) return false;
                         const [sx, sy] = sm[0].split(",").map(Number);
                         return Math.hypot(ax - sx, ay - sy) < 1.0;
                     });
+                    if (idx < 0) continue; // ink or unknown path
                 }
+                if (!seen.has(idx)) seen.set(idx, { sig: `${p.getAttribute("class")}` });
             }
-            window.console.logger({ activeGuideIdx, strokeIdx });
-            if (strokeIdx >= 0) return strokeIdx;
-            return 0;
+            const counts = {};
+            for (const { sig } of seen.values()) counts[sig] = (counts[sig] ?? 0) + 1;
+            window.console.logger({ guideClasses: Object.entries(counts), guideCount: seen.size });
+            if (track.highlight === undefined) {
+                const bySig = {};
+                for (const [idx, { sig }] of seen) (bySig[sig] ??= []).push(idx);
+                const singles = Object.entries(bySig).filter(([, a]) => a.length === 1);
+                singles.sort((a, b) => Math.min(...a[1]) - Math.min(...b[1]));
+                track.highlight = singles.length ? singles[0][0] : null;
+                window.console.logger({ highlightMode: track.highlight });
+            }
+            if (track.highlight) {
+                const hits = [...seen.entries()]
+                    .filter(([idx, { sig }]) => sig === track.highlight && !drawn.has(idx))
+                    .map(([idx]) => idx)
+                    .sort((a, b) => a - b);
+                return hits.length ? hits[0] : -1;
+            }
+            for (let k = 0; k < strokes.length; k++) {
+                if (!drawn.has(k)) return k;
+            }
+            return -1;
         } catch (e) {
             window.console.logger({ activeDetectFailed: String(e) });
-            return 0;
+            return drawn.size > 0 ? -1 : 0;
         }
     }
 
