@@ -236,24 +236,6 @@ class DuolingoChallenge {
         await sleep();
     }
     
-    async solveCorrectIndicesTypeProblems(){
-        let solutions = this.challengeInfo.correctIndices;
-        let wordBank = this.constructor.getElementsByDataTest("word-bank")[0];
-        if (!wordBank) {
-            window.console.logger("correctIndices: missing word-bank");
-            return;
-        }
-        let options = this.constructor.getElementsByDataTest("challenge-tap-token-text", wordBank);
-        for (let i = 0; i < solutions.length; i++){
-            if (!options[solutions[i]]) {
-                window.console.logger("correctIndices: missing option", solutions[i]);
-                return;
-            }
-            options[solutions[i]].click();
-            await sleep();
-        }
-    }
-
     solveWriteTextInSomeTextFieldTypeProblems() {
         // This method inserts a text inside some valid text field.
         // It uses "data-test" attribute to identify the text field.
@@ -276,8 +258,8 @@ class DuolingoChallenge {
                     return this.challengeInfo.challengeResponseTrackingProperties.best_solution;
 
                 default:
-                    alert("Unknown translate problem type: " + this.specificTranslateType);
-                    throw new Error(this.specificTranslateType);
+                    alert("Unknown translate problem type: " + specificTypeProblem);
+                    throw new Error(specificTypeProblem);
             }
         })();
 
