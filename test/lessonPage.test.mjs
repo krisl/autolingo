@@ -45,3 +45,35 @@ test("solve button gets its own section when Duolingo has none", (t) => {
     page.guessing();
     assert.equal(page.solveButton().parentElement.className, "autolingo-buttonsection");
 });
+
+test("autosolve: solves on GUESSING only with ?autosolve", async (t) => {
+    const off = lessonWithStubSolver(t);
+    off.guessing();
+    await tick(60);
+    assert.equal(off.window.solverRuns, 0);
+
+    const on = lessonWithStubSolver(t, "https://www.duolingo.com/lesson?autosolve=true");
+    on.guessing();
+    await tick(60);
+    assert.equal(on.window.solverRuns, 1);
+});
+
+test("autosolve: a manual click during autosolve does not solve twice", async (t) => {
+    const page = lessonWithStubSolver(t, "https://www.duolingo.com/lesson?autosolve=true");
+    page.guessing();
+    await tick(5);
+    page.solveButton().click();
+    await tick(60);
+    assert.equal(page.window.solverRuns, 1);
+});
+
+test("autosolve: clicks continue on BLAMING only with ?autosolve", async (t) => {
+    for (const [url, expected] of [["https://www.duolingo.com/lesson", 0], ["https://www.duolingo.com/lesson?autosolve=true", 1]]) {
+        const page = lessonWithStubSolver(t, url);
+        let clicks = 0;
+        page.document.querySelector("[data-test=player-next]").addEventListener("click", () => clicks++);
+        page.window.dispatchEvent(new page.window.CustomEvent("LessonStatusChanged", { detail: { player: { status: "BLAMING" } } }));
+        await tick(10);
+        assert.equal(clicks, expected, url);
+    }
+});
