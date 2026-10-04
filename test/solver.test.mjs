@@ -70,3 +70,26 @@ for (const [type, expected] of [["characterIntro", "judge-1"], ["select", "choic
         assert.deepEqual(clicked, [expected]);
     });
 }
+
+const PARTIAL = { type: "partialReverseTranslate", displayTokens: [{ text: "Io " }, { text: "ho ", isBlank: true }, { text: "fame", isBlank: true }] };
+
+function solvePartial(t, html) {
+    const page = loadPage(LESSON_SCRIPTS, { html });
+    t.after(page.close);
+    const input = page.document.querySelector("[contenteditable]");
+    const events = [];
+    input.addEventListener("input", (e) => events.push(e.bubbles));
+    challenge(page, PARTIAL).get_async_solver()();
+    return { text: input.textContent, events };
+}
+
+test("partialReverseTranslate: types the answer shown in the page", (t) => {
+    const r = solvePartial(t, `<span class="Id-Wa">ho fame</span>
+        <div data-test="challenge challenge-partialReverseTranslate"><span class="tapBI" contenteditable="true"></span></div>`);
+    assert.deepEqual(r, { text: "ho fame", events: [true] });
+});
+
+test("partialReverseTranslate: falls back to challenge data when hashed classes change", (t) => {
+    const r = solvePartial(t, `<div data-test="challenge challenge-partialReverseTranslate"><span contenteditable="true"></span></div>`);
+    assert.deepEqual(r, { text: "ho fame", events: [true] });
+});

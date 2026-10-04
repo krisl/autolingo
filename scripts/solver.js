@@ -119,19 +119,12 @@ class DuolingoChallenge {
         }
     }
     solveFromNearbyElementsButForPartialReverseTranslate() {
-        const altCorrectAnswer = this.challengeInfo.displayTokens.filter(dt => dt.isBlank).map(dt => dt.text).join('')
-        const answerNode = queryFirst(SELECTORS.partialAnswer, parent.document);
-        if (!answerNode) return;
-        const correctAnswer = answerNode.textContent
-        window.console.logger({altCorrectAnswer, correctAnswer})
-        window.console.logger(altCorrectAnswer === correctAnswer)
-
-        const altInputElement = window.document.querySelector("[data-test='challenge challenge-partialReverseTranslate'] [contenteditable=true]")
-        let inputElement = queryFirst(SELECTORS.partialInput, parent.document);
+        // Prefer the answer shown in the page; the challenge data is the
+        // fallback when Duolingo renames the hashed class.
+        const correctAnswer = queryFirst(SELECTORS.partialAnswer)?.textContent
+            ?? this.challengeInfo.displayTokens.filter(dt => dt.isBlank).map(dt => dt.text).join('');
+        let inputElement = queryFirst(SELECTORS.partialInput);
         if (!inputElement) return;
-
-        window.console.logger({altInputElement, inputElement})
-        window.console.logger(altInputElement === inputElement)
 
         inputElement.textContent = correctAnswer;
     

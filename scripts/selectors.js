@@ -26,9 +26,9 @@ const SELECTORS = {
     ],
     // Pair-match options container.
     matchContainer: ["div[data-test*='challenge'] > div > div > div"],
-    // Fill-in / cloze answer nodes (hashed classes, fragile by nature).
+    // partialReverseTranslate answer + input (hashed classes first).
     partialAnswer: [".Id-Wa"],
-    partialInput: [".tapBI"],
+    partialInput: [".tapBI", "[data-test='challenge challenge-partialReverseTranslate'] [contenteditable=true]"],
     listenButtons: [".ufykF"],
 };
 
