@@ -10,12 +10,18 @@
     "background": {
         "service_worker": "background.js"
     },
+    "action": {
+        "default_title": "Autolingo",
+        "default_popup": "popup/popup.html"
+    },
     "content_scripts": [
         {
             "all_frames": true,
             "js": [
                 "scripts/utils.js",
                 "scripts/solver.js",
+                "scripts/traceSolver.js",
+                "scripts/puzzleSolver.js",
                 "scripts/duolingoStatusEvent.js",
                 "scripts/lessonPage.js"
             ],
@@ -23,6 +29,14 @@
                 "styles/lesson.css"
             ],
             "world": "MAIN",
+            "matches": [
+                "*://*.duolingo.com/*"
+            ]
+        },
+        {
+            "js": [
+                "scripts/displaySettings.js"
+            ],
             "matches": [
                 "*://*.duolingo.com/*"
             ]
