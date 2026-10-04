@@ -1,11 +1,6 @@
 // Display-settings bridge: runs in the default ISOLATED world (unlike the
 // MAIN-world solvers) so it can use chrome.storage. Applies popup slider
 // values as CSS variables consumed by styles/lesson.css. Updates live.
-const DISPLAY_DEFAULTS = {
-    alHanziScale: 1.35,
-    alPinyinScale: 1,
-};
-
 function applyDisplaySettings(settings) {
     const root = document.documentElement;
     if (settings.alHanziScale != null) root.style.setProperty("--al-hanzi", settings.alHanziScale);

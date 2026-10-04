@@ -1,8 +1,5 @@
 // Popup sliders for display scaling. Writes straight to chrome.storage;
 // scripts/displaySettings.js picks it up live on every Duolingo tab.
-const HANZI_DEFAULT = 1.35;
-const PINYIN_DEFAULT = 1;
-
 function bindSlider(sliderId, valueId, storageKey, fallback) {
     const slider = document.getElementById(sliderId);
     const value = document.getElementById(valueId);
@@ -23,5 +20,5 @@ function bindSlider(sliderId, valueId, storageKey, fallback) {
     });
 }
 
-bindSlider("hanzi-slider", "hanzi-value", "alHanziScale", HANZI_DEFAULT);
-bindSlider("pinyin-slider", "pinyin-value", "alPinyinScale", PINYIN_DEFAULT);
+bindSlider("hanzi-slider", "hanzi-value", "alHanziScale", DISPLAY_DEFAULTS.alHanziScale);
+bindSlider("pinyin-slider", "pinyin-value", "alPinyinScale", DISPLAY_DEFAULTS.alPinyinScale);

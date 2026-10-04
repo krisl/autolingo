@@ -11,7 +11,7 @@ export const manifest = JSON.parse(read("manifest.json"));
 // Scripts of the MAIN-world content script, in manifest order.
 export const LESSON_SCRIPTS = manifest.content_scripts.find((c) => c.world === "MAIN").js;
 
-export function loadPage(scripts, { html = "", url = "https://www.duolingo.com/lesson" } = {}) {
+export function loadPage(scripts, { html = "", url = "https://www.duolingo.com/lesson", setup } = {}) {
     const logs = [];
     const errors = [];
     const virtualConsole = new VirtualConsole();
@@ -26,6 +26,7 @@ export function loadPage(scripts, { html = "", url = "https://www.duolingo.com/l
     });
     const ctx = dom.getInternalVMContext();
     const run = (src, filename = "inline.js") => new vm.Script(src, { filename }).runInContext(ctx);
+    setup?.(dom.window);
     for (const file of scripts) run(read(file), file);
     return { window: dom.window, document: dom.window.document, run, logs, errors, close: () => dom.window.close() };
 }

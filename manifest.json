@@ -33,6 +33,7 @@
         },
         {
             "js": [
+                "scripts/displayDefaults.js",
                 "scripts/displaySettings.js"
             ],
             "matches": [
