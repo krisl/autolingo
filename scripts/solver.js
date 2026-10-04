@@ -255,6 +255,15 @@ class DuolingoChallenge {
             window.console.logger("tapText: missing word-bank");
             return;
         }
+        // Send back tiles tapped before Solve: their copies sit in the answer
+        // row, with the same data-test as bank tiles but outside the bank.
+        const challengeRoot = wordBank.closest('[data-test^="challenge "]');
+        const answerRowTiles = () => Array.from(challengeRoot?.querySelectorAll('[data-test$="-challenge-tap-token"]') ?? [])
+            .filter((b) => !wordBank.contains(b));
+        for (let i = 0; i < 50 && answerRowTiles().length; i++) {
+            answerRowTiles()[0].click();
+            await sleep();
+        }
         const allPossibleButtons = Array.from(wordBank.querySelectorAll("button"));
         console.logger({allPossibleButtons, correctTokens})
         for (let token of correctTokens) {

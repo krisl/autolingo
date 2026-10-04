@@ -148,3 +148,41 @@ test("tap: repeated words use two different tiles", async (t) => {
     await challenge(page, { type: "translate", challengeGeneratorIdentifier: { specificType: "tap" }, correctTokens: ["thank", "you", "you"] }).solveByTapping();
     assert.deepEqual(clicked, ["thank", "you", "you"]);
 });
+
+// Fake of Duolingo's tap UI (Oct 2026): tapping a bank tile greys it out and
+// puts a copy (same data-test) in the answer row; tapping the copy undoes it.
+function tapChallengePage(t, words, pretapped) {
+    const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-translate">
+        <div id="answer"></div><div data-test="word-bank"></div></div>` });
+    t.after(page.close);
+    page.run(`window.sleep = () => Promise.resolve()`);
+    const doc = page.document;
+    const answer = doc.getElementById("answer");
+    const tile = (text) => {
+        const b = doc.createElement("button");
+        b.dataset.test = `${text}-challenge-tap-token`;
+        b.setAttribute("aria-disabled", "false");
+        b.innerHTML = `<span data-test="challenge-tap-token-text">${text}</span>`;
+        return b;
+    };
+    for (const w of words) {
+        const inBank = tile(w);
+        inBank.addEventListener("click", () => {
+            if (inBank.getAttribute("aria-disabled") === "true") return;
+            inBank.setAttribute("aria-disabled", "true");
+            const copy = tile(w);
+            copy.addEventListener("click", () => { copy.remove(); inBank.setAttribute("aria-disabled", "false"); });
+            answer.append(copy);
+        });
+        doc.querySelector('[data-test="word-bank"]').append(inBank);
+    }
+    for (const w of pretapped) doc.querySelector(`[data-test="word-bank"] [data-test="${w}-challenge-tap-token"]`).click();
+    return { page, answerText: () => [...answer.children].map((b) => b.textContent).join(" ") };
+}
+
+test("tap: tiles tapped before Solve are sent back first", async (t) => {
+    const { page, answerText } = tapChallengePage(t, ["board", "History", "homework", "day"], ["board", "History"]);
+    assert.equal(answerText(), "board History");
+    await challenge(page, { type: "translate", challengeGeneratorIdentifier: { specificType: "tap" }, correctTokens: ["History", "homework"] }).solveByTapping();
+    assert.equal(answerText(), "History homework");
+});
