@@ -26,25 +26,6 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
                 confirm("Relaod page for start the autosolving?") ? location.assign(location.pathname + "?autosolve=true") : null;
             }
 
-            // Insert button for autosolve lesson.
-            //const progressBarContainer = document.querySelector("button[data-test='quit-button']").parentNode;
-
-            //// Classes for styling
-            //progressBarContainer.classList.add("autolingo-progress-bar");
-            //let className = document.location.pathname.includes("test") ? "unit_test" : document.location.pathname.split("/").at(1);
-            //progressBarContainer.classList.add(className);
-
-            //if (!progressBarContainer["autolingo_solve_button_inserted"]) {
-            //    let button = document.querySelector("button[data-test='quit-button']").cloneNode(true);
-            //    button.classList.add("autolingo-autosolve");
-            //    button.removeAttribute("data-test");
-            //    button.setAttribute("title", "Start autosolving");
-            //    button.addEventListener("click", handleAutosolveRequest);
-            //    progressBarContainer.insertBefore(button, progressBarContainer.querySelector("div[role='progressbar']"));
-            //    progressBarContainer["autolingo_solve_button_inserted"] = true;
-            //    console.logger("Button inserted");
-            //};
-
             // Insert button for solve this problem.
             const footer = queryFirst(SELECTORS.footer);
             if (!footer) {
