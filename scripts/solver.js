@@ -244,7 +244,7 @@ class DuolingoChallenge {
 
     async solveByTapping() {
         // This method clicks the correct button from an array of possible buttons in the order required.
-        // It uses the "._3CBig" class to identify possible buttons.
+        // Pressed tiles carry aria-disabled="true".
 
         const specificTypeProblem = this.challengeInfo.challengeGeneratorIdentifier.specificType;
         const targetLanguage = this.challengeInfo.targetLanguage
@@ -255,16 +255,10 @@ class DuolingoChallenge {
             window.console.logger("tapText: missing word-bank");
             return;
         }
-        let firstButton = wordBank.querySelector("button");
-        if (!firstButton) {
-            window.console.logger("tapText: no buttons in word-bank");
-            return;
-        }
-        let buttonUnpressedClasses = firstButton.classList.toString();
         const allPossibleButtons = Array.from(wordBank.querySelectorAll("button"));
         console.logger({allPossibleButtons, correctTokens})
         for (let token of correctTokens) {
-            const avaibleButtons = allPossibleButtons.filter((e) => e.classList.toString() === buttonUnpressedClasses);
+            const avaibleButtons = allPossibleButtons.filter((e) => e.getAttribute("aria-disabled") !== "true");
             const tokensText = this.extractTextFromNodes(avaibleButtons);
             console.logger({avaibleButtons, tokensText})
             if (!tokensText[token]) {

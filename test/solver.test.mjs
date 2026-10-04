@@ -120,3 +120,31 @@ test("match: clicks each pair, skipping tiles already matched", async (t) => {
     await challenge(page, { type: "match", pairs: [{ fromToken: "soda", learningToken: "汽水" }, { fromToken: "help", learningToken: "帮" }] }).get_async_solver()();
     assert.deepEqual(clicked, ["soda", "汽水", "help", "帮"]);
 });
+
+// Live word-bank markup (Oct 2026): pressed tiles get aria-disabled="true" and another class.
+function wordBankPage(t, tiles) {
+    const tile = ([text, pressed]) => `<button aria-disabled="${pressed}" class="${pressed ? "_2wryV" : "_3fmUm"}" data-test="${text}-challenge-tap-token"><span data-test="challenge-tap-token-text">${text}</span></button>`;
+    const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="word-bank">${tiles.map(tile).join("")}</div>` });
+    t.after(page.close);
+    page.run(`window.sleep = () => Promise.resolve()`);
+    const clicked = [];
+    page.document.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        clicked.push(b.textContent);
+        b.setAttribute("aria-disabled", "true");
+        b.className = "_2wryV";
+    });
+    return { page, clicked };
+}
+
+test("tap: picks unpressed tiles even when the first tile is already pressed", async (t) => {
+    const { page, clicked } = wordBankPage(t, [["spicy", true], ["No", false], ["problem", false]]);
+    await challenge(page, { type: "translate", challengeGeneratorIdentifier: { specificType: "tap" }, correctTokens: ["No", "problem"] }).solveByTapping();
+    assert.deepEqual(clicked, ["No", "problem"]);
+});
+
+test("tap: repeated words use two different tiles", async (t) => {
+    const { page, clicked } = wordBankPage(t, [["you", false], ["thank", false], ["you", false]]);
+    await challenge(page, { type: "translate", challengeGeneratorIdentifier: { specificType: "tap" }, correctTokens: ["thank", "you", "you"] }).solveByTapping();
+    assert.deepEqual(clicked, ["thank", "you", "you"]);
+});
