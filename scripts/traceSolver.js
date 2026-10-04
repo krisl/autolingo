@@ -25,13 +25,7 @@ Object.assign(DuolingoChallenge.prototype, {
             return;
         }
 
-        // 1. Try React-level bypass: many trace components expose onComplete/onPass.
-        if (this.tryReactTraceBypass(traceEl)) {
-            await sleep(500);
-            return;
-        }
-
-        // 1b. Wait until the pad is mounted and stable before drawing.
+        // 1. Wait until the pad is mounted and stable before drawing.
         await this.waitForTraceReady(traceEl, strokes);
 
         // 2. Replay strokes synthetically. Re-detect the quiz's active stroke
@@ -112,28 +106,6 @@ Object.assign(DuolingoChallenge.prototype, {
             }
         }
         return null;
-    },
-
-    tryReactTraceBypass(traceEl) {
-        // Walk up a few levels looking for a React prop that marks the trace done.
-        let el = traceEl;
-        for (let depth = 0; depth < 6 && el; depth++) {
-            const fiber = window.getReactElement(el);
-            const props = fiber?.pendingProps ?? fiber?.memoizedProps ?? {};
-            for (const key of Object.keys(props)) {
-                if (/complete|pass|success|correct|done|nextStroke|onTrace/i.test(key) && typeof props[key] === "function") {
-                    window.console.logger({ reactBypassCandidate: key, depth });
-                    try {
-                        props[key]();
-                        // If it didn't throw, assume it helped; drawing will finish the rest.
-                    } catch (e) {
-                        window.console.logger({ reactBypassFailed: key, e: String(e) });
-                    }
-                }
-            }
-            el = el.parentElement;
-        }
-        return false; // never fully trust bypass; always draw afterwards
     },
 
     strokeSvgRoot() {
