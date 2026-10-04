@@ -1,6 +1,10 @@
 // This code get executed when a lesson like page is loaded.
 // It execute all the solver related code.
 
+// True while a solver runs: a second Solve click (or autosolve) would replay
+// the answer on top, e.g. redraw every trace stroke and lose hearts.
+let autolingoSolving = false;
+
 window.addEventListener("LessonStatusChanged", async function ({ detail: pageData }) {
     const playerStatus = pageData.player?.status
     console.logger("currentStatus: " + playerStatus);
@@ -11,14 +15,22 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
 	  window.console.logger('hi', {pageData})
             const solve = currentChallange.get_async_solver();
             const handleSolve = async () => {
+                if (autolingoSolving) {
+                    console.logger("already solving, ignoring click");
+                    return;
+                }
                 currentChallange.printDebugInfo();
                 if (!solve) {
                     alert("Unknown problem type: " + currentChallange.challengeInfo.type);
                     throw new Error(currentChallange.challengeInfo.type)
                 }
-                await solve();
-
-                await sleep();
+                autolingoSolving = true;
+                try {
+                    await solve();
+                    await sleep();
+                } finally {
+                    autolingoSolving = false;
+                }
                 //DuolingoChallenge.clickButtonCheck();
             }
 
