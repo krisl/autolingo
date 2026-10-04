@@ -265,9 +265,12 @@ class DuolingoChallenge {
             await sleep();
         }
         const allPossibleButtons = Array.from(wordBank.querySelectorAll("button"));
+        // A sent-back tile is re-enabled only after its fly-back animation.
+        const isPressed = (b) => b.getAttribute("aria-disabled") === "true";
+        for (let t = 0; t < 3000 && allPossibleButtons.some(isPressed); t += 100) await sleep(100);
         console.logger({allPossibleButtons, correctTokens})
         for (let token of correctTokens) {
-            const avaibleButtons = allPossibleButtons.filter((e) => e.getAttribute("aria-disabled") !== "true");
+            const avaibleButtons = allPossibleButtons.filter((e) => !isPressed(e));
             const tokensText = this.extractTextFromNodes(avaibleButtons);
             console.logger({avaibleButtons, tokensText})
             if (!tokensText[token]) {

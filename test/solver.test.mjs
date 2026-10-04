@@ -150,12 +150,13 @@ test("tap: repeated words use two different tiles", async (t) => {
 });
 
 // Fake of Duolingo's tap UI (Oct 2026): tapping a bank tile greys it out and
-// puts a copy (same data-test) in the answer row; tapping the copy undoes it.
-function tapChallengePage(t, words, pretapped) {
+// puts a copy (same data-test) in the answer row; tapping the copy undoes it,
+// but the bank tile is only re-enabled after the fly-back animation.
+function tapChallengePage(t, words, pretapped, flyBackMs = 30) {
     const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-translate">
         <div id="answer"></div><div data-test="word-bank"></div></div>` });
     t.after(page.close);
-    page.run(`window.sleep = () => Promise.resolve()`);
+    page.run(`window.sleep = (ms = 0) => new Promise((r) => setTimeout(r, Math.min(ms, 10)))`);
     const doc = page.document;
     const answer = doc.getElementById("answer");
     const tile = (text) => {
@@ -171,7 +172,10 @@ function tapChallengePage(t, words, pretapped) {
             if (inBank.getAttribute("aria-disabled") === "true") return;
             inBank.setAttribute("aria-disabled", "true");
             const copy = tile(w);
-            copy.addEventListener("click", () => { copy.remove(); inBank.setAttribute("aria-disabled", "false"); });
+            copy.addEventListener("click", () => {
+                copy.remove();
+                setTimeout(() => inBank.setAttribute("aria-disabled", "false"), flyBackMs);
+            });
             answer.append(copy);
         });
         doc.querySelector('[data-test="word-bank"]').append(inBank);
