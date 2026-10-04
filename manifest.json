@@ -24,7 +24,8 @@
                 "scripts/traceSolver.js",
                 "scripts/puzzleSolver.js",
                 "scripts/duolingoStatusEvent.js",
-                "scripts/lessonPage.js"
+                "scripts/lessonPage.js",
+                "scripts/autosolve.js"
             ],
             "css": [
                 "styles/lesson.css"

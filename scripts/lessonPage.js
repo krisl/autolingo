@@ -8,8 +8,7 @@ let autolingoSolving = false;
 window.addEventListener("LessonStatusChanged", async function ({ detail: pageData }) {
     const playerStatus = pageData.player?.status
     console.logger("currentStatus: " + playerStatus);
-    switch (playerStatus) {
-        case "GUESSING":
+    if (playerStatus !== "GUESSING") return;
             const currentChallange = new DuolingoChallenge(pageData);
             currentChallange.printDebugInfo();
 	  window.console.logger('hi', {pageData})
@@ -32,10 +31,6 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
                     autolingoSolving = false;
                 }
                 //DuolingoChallenge.clickButtonCheck();
-            }
-
-            function handleAutosolveRequest() {
-                confirm("Relaod page for start the autosolving?") ? location.assign(location.pathname + "?autosolve=true") : null;
             }
 
             // Insert button for solve this problem.
@@ -82,42 +77,4 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
                 }
             }
             } // end else (footer present)
-
-            if (document.location.search.includes("autosolve")) { await sleep(); handleSolve() };
-            break;
-
-        case "BLAMING":
-        case "COACH_DUO":
-        case "HARD_MODE_DUO":
-        case "LEGENDARY_DUO":
-        case "PARTIAL_XP_DUO":
-        case "CAPSTONE_REVIEW_SPLASH":
-        case "COACH_DUO_SPLASH":
-        case "VISIBLE_PERSONALIZATION_SPLASH":
-        case "PLACEMENT_SPLASH":
-        case "UNIT_TEST_SPLASH":
-            if (document.location.search.includes("autosolve")) { await sleep(); DuolingoChallenge.clickButtonContinue() };
-            break;
-
-        case "COACH_DUO_SLIDING":
-        case "SLIDING":
-        case "HARD_MODE_DUO_SLIDING":
-        case "SUBMITTING":
-        case "PARTIAL_XP_DUO_SLIDING":
-        case "GRADING":
-            console.logger("Waiting...");
-            break;
-
-        case "END_CAROUSEL":
-            const urlObject = new URL(document.location);
-            if (urlObject.search.includes("repeat")) { 
-                const value = urlObject.searchParams.get("repeat");
-                if(!value || isNaN(Number(value))){ await sleep(); location.reload() };
-                if(Number(value) > 0){ await sleep(); location.assign(location.pathname + "?autosolve&repeat=" + (Number(value) - 1)) };
-            };
-            break;
-
-        default:
-            console.logger("Unknown lesson status: " + playerStatus);
-    }
 })
