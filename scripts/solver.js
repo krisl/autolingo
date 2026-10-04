@@ -291,21 +291,15 @@ class DuolingoChallenge {
     }
 
     async solveCharacterMatch() {
-        // This method clicks the correct button from two arrays of possible buttons in the order required.
-        // It uses the "._33Jbm" class to identify possible buttons.x
+        // This method clicks both tiles of each pair, in order.
+        // Tiles are buttons; matched ones carry aria-disabled="true".
         let optionsContainer = queryFirst(SELECTORS.matchContainer);
         if (!optionsContainer) return;
-        let firstButton = optionsContainer.querySelector("button");
-        if (!firstButton) {
-            window.console.logger("match: no buttons in container");
-            return;
-        }
-        let buttonUnpressedClasses = firstButton.classList.toString();
 
         let solutionPairs = this.challengeInfo.pairs;
         for (let pair of solutionPairs) {
-            let allOptionsNodes = Array.from(optionsContainer.querySelectorAll("span"));
-            let optionNodes = allOptionsNodes.filter((e) => e.classList.toString() === buttonUnpressedClasses);
+            let optionNodes = Array.from(optionsContainer.querySelectorAll("button"))
+                .filter((b) => b.getAttribute("aria-disabled") !== "true");
             let pairsNodeText = this.extractTextFromNodes(optionNodes);
 
             const first = pairsNodeText[pair.fromToken ?? pair.transliteration];

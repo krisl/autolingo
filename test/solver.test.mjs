@@ -103,3 +103,20 @@ test("listenIsolation: clicks the correct option", async (t) => {
     await challenge(page, { type: "listenIsolation", correctIndex: 1 }).get_async_solver()();
     assert.deepEqual(clicked, ["o1"]);
 });
+
+// Live markup (Oct 2026): every match tile is a <button>, matched tiles get aria-disabled="true".
+test("match: clicks each pair, skipping tiles already matched", async (t) => {
+    const tile = (text) => `<button aria-disabled="false" class="_3fmUm" data-test="${text}-challenge-tap-token"><span data-test="challenge-tap-token-text">${text}</span></button>`;
+    const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-match"><div><div>
+        <div>${["help", "soda", "帮", "汽水"].map(tile).join("")}</div></div></div></div>` });
+    t.after(page.close);
+    page.run(`window.sleep = () => Promise.resolve()`);
+    const clicked = [];
+    page.document.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        clicked.push(b.textContent);
+        b.setAttribute("aria-disabled", "true");
+    });
+    await challenge(page, { type: "match", pairs: [{ fromToken: "soda", learningToken: "汽水" }, { fromToken: "help", learningToken: "帮" }] }).get_async_solver()();
+    assert.deepEqual(clicked, ["soda", "汽水", "help", "帮"]);
+});
