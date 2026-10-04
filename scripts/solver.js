@@ -86,7 +86,6 @@ class DuolingoChallenge {
             case "match":
                 return () => this.solveCharacterMatch();
             
-            case "read_comprehension":
             case "translate":
             case "listenTap":
             case "name":
@@ -259,7 +258,6 @@ class DuolingoChallenge {
             "listenTap": "challenge-translate-input",
             "transliterate": "challenge-text-input",
             "name": "challenge-text-input",
-            "type": "challenge-text-input",
             "completeReverseTranslation": "challenge-translate-input"
         }
 
