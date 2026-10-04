@@ -55,31 +55,18 @@ Object.assign(DuolingoChallenge.prototype, {
             // while the quiz is still settling gets it silently ignored.
             await this.waitForQuiescent();
             const next = this.findActiveStrokeIndex(strokes, drawn, track, preDone);
-            if (track.highlight) {
-                // Highlight must move (or vanish = complete). Unmoved = invalid stroke.
-                if (next === i) {
-                    rejects++;
-                    window.console.logger({ rejected: i, rejects });
-                    if (rejects >= 3) {
-                        alert("Autolingo: stopping trace early (3 strokes not accepted) to save hearts. Finish manually, then Solve again.");
-                        return;
-                    }
-                } else {
-                    rejects = 0;
-                }
-                if (next < 0) {
-                    window.console.logger({ traceComplete: true });
-                    return;
-                }
-            } else if (!accepted) {
-                rejects++;
-                window.console.logger({ rejected: i, rejects });
-                if (rejects >= 3) {
-                    alert("Autolingo: stopping trace early (3 strokes not accepted) to save hearts. Finish manually, then Solve again.");
-                    return;
-                }
-            } else {
-                rejects = 0;
+            // Highlight mode: the highlight must move (or vanish = complete);
+            // unmoved = invalid stroke. Order mode: trust the ink check.
+            const ok = track.highlight ? next !== i : accepted;
+            rejects = ok ? 0 : rejects + 1;
+            if (!ok) window.console.logger({ rejected: i, rejects });
+            if (rejects >= 3) {
+                alert("Autolingo: stopping trace early (3 strokes not accepted) to save hearts. Finish manually, then Solve again.");
+                return;
+            }
+            if (track.highlight && next < 0) {
+                window.console.logger({ traceComplete: true });
+                return;
             }
             i = next;
         }
