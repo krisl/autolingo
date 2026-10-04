@@ -122,30 +122,8 @@ Object.assign(DuolingoChallenge.prototype, {
         // coverage wins. Without any singleton, fall back to majority.
         // Lone extra copies (coverage 1) are overlays, never guides.
         // Redrawing done strokes counts as a mistake, so skip them.
-        const norm = (s) => (s ?? "").replace(/\s+/g, " ").trim();
-        const strokeDs = strokes.map((s) => norm(s.path));
         const classSets = strokes.map(() => new Set());
-        const svg = this.strokeSvgRoot();
-        const scope = svg ?? queryFirst(SELECTORS.challengeRoot) ?? document;
-        for (const p of Array.from(scope.querySelectorAll("svg path, path"))) {
-            const d = norm(p.getAttribute("d"));
-            if (d.length <= 20 || /[HVhv]/.test(d)) continue; // grid lines
-            let idx = strokeDs.indexOf(d);
-            if (idx < 0) {
-                // Start-point fallback (numeric precision can differ).
-                const m = d.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
-                if (!m) continue;
-                const [ax, ay] = m[0].split(",").map(Number);
-                idx = strokes.findIndex((s) => {
-                    const sm = norm(s.path).match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
-                    if (!sm) return false;
-                    const [sx, sy] = sm[0].split(",").map(Number);
-                    return Math.hypot(ax - sx, ay - sy) < 1.0;
-                });
-                if (idx < 0) continue; // ink or unknown path
-            }
-            classSets[idx].add(`${p.getAttribute("class")}`);
-        }
+        for (const { idx, cls } of this.strokePaths(strokes)) classSets[idx].add(cls);
         const coverage = new Map(); // class -> Set(idxs)
         classSets.forEach((set, i) => {
             for (const c of set) {
@@ -187,32 +165,26 @@ Object.assign(DuolingoChallenge.prototype, {
         return done;
     },
 
-    strokeGuides(strokes) {
-        // Rendered guide paths mapped to strokes[] indices (excludes grid + ink).
-        // Returns Map strokeIdx -> {sig, el}.
-        const norm = (s) => (s ?? "").replace(/\s+/g, " ").trim();
-        const strokeDs = strokes.map((s) => norm(s.path));
+    strokePaths(strokes) {
+        // Rendered <path>s that draw one of strokes[] (excludes grid + ink),
+        // in DOM order: [{idx, cls, el}].
         const svg = this.strokeSvgRoot();
         const scope = svg ?? queryFirst(SELECTORS.challengeRoot) ?? document;
+        return Array.from(scope.querySelectorAll("svg path, path"))
+            .map((el) => ({
+                idx: this.constructor.matchStrokeIndex(el.getAttribute("d"), strokes),
+                cls: `${el.getAttribute("class")}`,
+                el,
+            }))
+            .filter((p) => p.idx >= 0);
+    },
+
+    strokeGuides(strokes) {
+        // Rendered guide paths mapped to strokes[] indices (excludes grid + ink).
+        // Returns Map strokeIdx -> {sig, el}; the first path per stroke wins.
         const seen = new Map();
-        for (const p of Array.from(scope.querySelectorAll("svg path, path"))) {
-            const d = norm(p.getAttribute("d"));
-            if (d.length <= 20 || /[HVhv]/.test(d)) continue; // grid lines
-            let idx = strokeDs.indexOf(d);
-            if (idx < 0) {
-                // Start-point fallback (numeric precision can differ).
-                const m = d.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
-                if (!m) continue;
-                const [ax, ay] = m[0].split(",").map(Number);
-                idx = strokes.findIndex((s) => {
-                    const sm = norm(s.path).match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
-                    if (!sm) return false;
-                    const [sx, sy] = sm[0].split(",").map(Number);
-                    return Math.hypot(ax - sx, ay - sy) < 1.0;
-                });
-                if (idx < 0) continue; // ink or unknown path
-            }
-            if (!seen.has(idx)) seen.set(idx, { sig: `${p.getAttribute("class")}`, el: p });
+        for (const { idx, cls, el } of this.strokePaths(strokes)) {
+            if (!seen.has(idx)) seen.set(idx, { sig: cls, el });
         }
         return seen;
     },
@@ -320,23 +292,23 @@ Object.assign(DuolingoChallenge.prototype, {
     findGuidePathEl(strokePath) {
         // Rendered guide <path d="..."> should equal challengeInfo path.
         // Match exactly (whitespace-insensitive) to sample true screen coords.
-        const norm = (s) => (s ?? "").replace(/\s+/g, " ").trim();
-        const want = norm(strokePath);
+        const { normPath, pathStart } = this.constructor;
+        const want = normPath(strokePath);
         const root = queryFirst(SELECTORS.challengeRoot) ?? document;
         const paths = Array.from(root.querySelectorAll("svg path"));
         for (const p of paths) {
-            if (norm(p.getAttribute("d")) === want) return p;
+            if (normPath(p.getAttribute("d")) === want) return p;
         }
         // Fallback: same start point, compared NUMERICALLY (substring
         // matching can grab a similar-but-wrong stroke's path).
-        const wantStart = (want.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/) ?? [null])[0];
+        const wantStart = pathStart(want);
         if (wantStart) {
-            const [wx, wy] = wantStart.split(",").map(Number);
+            const [wx, wy] = wantStart;
             let best = null, bestDist = 1.0;
             for (const p of paths) {
-                const m = (norm(p.getAttribute("d")) ?? "").match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
-                if (!m) continue;
-                const [px, py] = m[0].split(",").map(Number);
+                const start = pathStart(p.getAttribute("d"));
+                if (!start) continue;
+                const [px, py] = start;
                 const dist = Math.hypot(px - wx, py - wy);
                 if (dist < bestDist) { bestDist = dist; best = p; }
             }
@@ -447,6 +419,34 @@ Object.assign(DuolingoChallenge.prototype, {
 });
 
 Object.assign(DuolingoChallenge, {
+
+    normPath(d) {
+        // Path "d" strings compare equal regardless of whitespace.
+        return (d ?? "").replace(/\s+/g, " ").trim();
+    },
+
+    pathStart(d) {
+        // First "x,y" pair of a path as numbers, or null.
+        const m = DuolingoChallenge.normPath(d).match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/);
+        return m ? m[0].split(",").map(Number) : null;
+    },
+
+    matchStrokeIndex(d, strokes) {
+        // Index in strokes[] that a rendered path draws, or -1 for grid
+        // lines, ink and unknown paths. Exact match first, then start point
+        // (numeric precision can differ).
+        const { normPath, pathStart } = DuolingoChallenge;
+        d = normPath(d);
+        if (d.length <= 20 || /[HVhv]/.test(d)) return -1; // grid lines
+        const exact = strokes.findIndex((s) => normPath(s.path) === d);
+        if (exact >= 0) return exact;
+        const start = pathStart(d);
+        if (!start) return -1;
+        return strokes.findIndex((s) => {
+            const s0 = pathStart(s.path);
+            return s0 !== null && Math.hypot(start[0] - s0[0], start[1] - s0[1]) < 1.0;
+        });
+    },
 
     parseSvgPathToPoints(path, samplesPerCurve = 16) {
         // Sample ON-curve points (dragging through cubic control points,

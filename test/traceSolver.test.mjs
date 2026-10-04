@@ -80,3 +80,15 @@ test("trace: guide path found exactly, or by nearest start point", (t) => {
     assert.equal(c.findGuidePathEl("M 50.1,50.1 L 70,70 L 90,90").getAttribute("d"), "M 50,50 L 70,70 L 90,90");
     assert.equal(c.findGuidePathEl("M 300,300 L 310,310 L 320,320"), null);
 });
+
+test("trace: matchStrokeIndex", (t) => {
+    const page = loadPage(LESSON_SCRIPTS);
+    t.after(page.close);
+    page.window.STROKES = STROKES;
+    const match = (d) => page.run(`DuolingoChallenge.matchStrokeIndex(${JSON.stringify(d)}, window.STROKES)`);
+    assert.equal(match("M 15,80  C 25,85 35,85 45,80 "), 2, "exact, whitespace ignored");
+    assert.equal(match("M 50.3,50.2 L 70,70 L 90,90"), 1, "start point within 1px");
+    assert.equal(match("M 0,0 H 109 V 109 H 0 Z"), -1, "grid line");
+    assert.equal(match("M 200,200 L 210,210 L 220,220"), -1, "ink / unknown");
+    assert.equal(match(null), -1);
+});
