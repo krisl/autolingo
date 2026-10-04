@@ -18,7 +18,7 @@ jobs:
               uses: actions/checkout@v3
 
             - name: Remove extra files and especific git folders
-              run: rm -rf README.md LICENSE .git .github
+              run: rm -rf README.md LICENSE .git .github .gitignore test package.json package-lock.json
 
             - name: Get actual date for version name.
               id: actual-date
