@@ -93,3 +93,13 @@ test("partialReverseTranslate: falls back to challenge data when hashed classes 
     const r = solvePartial(t, `<div data-test="challenge challenge-partialReverseTranslate"><span contenteditable="true"></span></div>`);
     assert.deepEqual(r, { text: "ho fame", events: [true] });
 });
+
+test("listenIsolation: clicks the correct option", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: `<button id="o0" class="ufykF"></button><button id="o1" class="ufykF"></button>` });
+    t.after(page.close);
+    page.run(`window.sleep = () => Promise.resolve()`);
+    const clicked = [];
+    page.document.addEventListener("click", (e) => clicked.push(e.target.id));
+    await challenge(page, { type: "listenIsolation", correctIndex: 1 }).get_async_solver()();
+    assert.deepEqual(clicked, ["o1"]);
+});

@@ -159,7 +159,7 @@ class DuolingoChallenge {
     }
 
     async solveListenIsolation() {
-        const buttons = parent.document.querySelectorAll(SELECTORS.listenButtons[0]);
+        const buttons = document.querySelectorAll(SELECTORS.listenButtons[0]);
         if (!buttons[this.challengeInfo.correctIndex]) {
             window.console.logger("listenIsolation: missing button", this.challengeInfo.correctIndex);
             return;
