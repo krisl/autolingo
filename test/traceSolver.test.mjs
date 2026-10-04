@@ -92,3 +92,52 @@ test("trace: matchStrokeIndex", (t) => {
     assert.equal(match("M 200,200 L 210,210 L 220,220"), -1, "ink / unknown");
     assert.equal(match(null), -1);
 });
+
+// Run solveCharacterWrite with every DOM step stubbed. `active` is the
+// sequence findActiveStrokeIndex returns, `accepted` what the ink check says.
+async function runTraceLoop(t, { strokes, highlight, active, accepted = [] }) {
+    const page = loadPage(LESSON_SCRIPTS, { html: `<div id="pad"></div>` });
+    t.after(page.close);
+    const alerts = [];
+    page.window.alert = (m) => alerts.push(m);
+    const c = challenge(page, { strokes: strokes.map((_, k) => ({ path: `M ${k},0 L ${k},10` })) });
+    const drawn = [];
+    Object.assign(c, {
+        findTraceElement: () => page.document.getElementById("pad"),
+        waitForTraceReady: async () => true,
+        doneStrokeIndices: () => new Set(),
+        playerStatus: () => "GUESSING",
+        snapshotStrokeSvg: () => "",
+        waitForQuiescent: async () => {},
+        dispatchStroke: async (_el, _pts, path) => drawn.push(Number(path.split(/[ ,]/)[1])),
+        waitForStrokeAccepted: async () => accepted.shift() ?? true,
+        findActiveStrokeIndex: (_s, _d, track) => {
+            track.highlight = highlight;
+            return active.shift() ?? -1;
+        },
+    });
+    await c.solveCharacterWrite();
+    return { drawn, alerts };
+}
+
+test("trace loop, highlight mode: follows the highlight until it vanishes", async (t) => {
+    const r = await runTraceLoop(t, { strokes: [0, 1, 2], highlight: "hl", active: [0, 1, 2, -1] });
+    assert.deepEqual(r, { drawn: [0, 1, 2], alerts: [] });
+});
+
+test("trace loop, highlight mode: stops after 3 strokes the highlight ignores", async (t) => {
+    const r = await runTraceLoop(t, { strokes: [0, 1, 2], highlight: "hl", active: [0, 1, 1, 1, 1] });
+    assert.deepEqual(r.drawn, [0, 1, 1, 1]);
+    assert.equal(r.alerts.length, 1);
+});
+
+test("trace loop, order mode: stops after 3 rejects in a row", async (t) => {
+    const r = await runTraceLoop(t, { strokes: [0, 1, 2, 3], highlight: null, active: [0, 1, 2, 3, -1], accepted: [true, false, false, false] });
+    assert.deepEqual(r.drawn, [0, 1, 2, 3]);
+    assert.equal(r.alerts.length, 1);
+});
+
+test("trace loop, order mode: an accepted stroke resets the reject count", async (t) => {
+    const r = await runTraceLoop(t, { strokes: [0, 1, 2, 3, 4], highlight: null, active: [0, 1, 2, 3, 4, -1], accepted: [false, false, true, false, false] });
+    assert.deepEqual(r, { drawn: [0, 1, 2, 3, 4], alerts: [] });
+});
