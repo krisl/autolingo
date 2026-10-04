@@ -17,7 +17,7 @@ test("listenComplete shows the best solution as text, not HTML", async (t) => {
         type: "listenComplete",
         displayTokens: [{ text: "a" }, { text: "word", isBlank: true }],
         challengeResponseTrackingProperties: { best_solution: best },
-    }).solveFromNearbyElements();
+    }).solveFillBlank();
     await tick(5);
 
     assert.deepEqual(typed, ["word"]);
@@ -38,7 +38,7 @@ test("typed answer still goes in when Duolingo's Howl audio global is missing", 
         correctSolutions: ["ciao"],
         solutionTts: "https://example.invalid/tts.mp3",
     });
-    assert.doesNotThrow(() => c.solveWriteTextInSomeTextFieldTypeProblems());
+    assert.doesNotThrow(() => c.solveByTyping());
     assert.deepEqual(typed, ["ciao"]);
 });
 
@@ -53,7 +53,7 @@ test("tap answer still goes in when Duolingo's Howler global is missing", async 
         type: "listenTap",
         challengeGeneratorIdentifier: { specificType: "listen_tap" },
         correctTokens: ["ciao"],
-    }).solveTapTextTypeProblems();
+    }).solveByTapping();
     assert.equal(clicks, 1);
 });
 

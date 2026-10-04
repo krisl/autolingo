@@ -79,7 +79,7 @@ class DuolingoChallenge {
             case "gapFill":
             case "reverseAssist":
             case "transliterationAssist":
-                return () => this.solveSelectCorrectIndexTypeProblems();
+                return () => this.solveMultipleChoice();
 
             case "characterMatch":
             case "match":
@@ -88,13 +88,13 @@ class DuolingoChallenge {
             case "translate":
             case "listenTap":
             case "name":
-                return () => this.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveTapTextTypeProblems();
+                return () => this.isKeyboardEnabled ? this.solveByTyping() : this.solveByTapping();
 
             case "transliterate":
-                return () => this.solveWriteTextInSomeTextFieldTypeProblems();
+                return () => this.solveByTyping();
 
             case "tapComplete":
-                return () => this.solveTapTextTypeProblems();
+                return () => this.solveByTapping();
 
             case "svgPuzzle":
                 return () => this.solveSvgPuzzle();
@@ -108,17 +108,17 @@ class DuolingoChallenge {
                 return () => this.solveListenIsolation();
 
             case "listen":
-                return () => this.writeTextInSpace();
+                return () => this.solveListen();
 
             case "listenComplete":
-                return () => this.solveFromNearbyElements();
+                return () => this.solveFillBlank();
             case "completeReverseTranslation":
-                return () => this.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveFromNearbyElements();
+                return () => this.isKeyboardEnabled ? this.solveByTyping() : this.solveFillBlank();
             case "partialReverseTranslate":
-                return () => this.solveFromNearbyElementsButForPartialReverseTranslate();
+                return () => this.solvePartialReverseTranslate();
         }
     }
-    solveFromNearbyElementsButForPartialReverseTranslate() {
+    solvePartialReverseTranslate() {
         // Prefer the answer shown in the page; the challenge data is the
         // fallback when Duolingo renames the hashed class.
         const correctAnswer = queryFirst(SELECTORS.partialAnswer)?.textContent
@@ -138,7 +138,7 @@ class DuolingoChallenge {
         inputElement.dispatchEvent(event);
     }
 
-    solveFromNearbyElements() {
+    solveFillBlank() {
         const correctAnswer = this.challengeInfo.displayTokens.find(dt => dt.isBlank).text
 
         let textField = this.constructor.getElementsByDataTest("challenge-text-input")[0];
@@ -168,17 +168,17 @@ class DuolingoChallenge {
         await sleep();
     }
 
-    writeTextInSpace() {
+    solveListen() {
         let bestSolution = this.challengeInfo.challengeResponseTrackingProperties.best_solution;
         let textField = this.constructor.getElementsByDataTest("challenge-translate-input")[0];
         if (!textField) {
-            window.console.logger("writeTextInSpace: missing text field");
+            window.console.logger("solveListen: missing text field");
             return;
         }
         window.getReactElement(textField)?.pendingProps?.onChange({ target: { value: bestSolution } });
     }
 
-    async solveSelectCorrectIndexTypeProblems() {
+    async solveMultipleChoice() {
         // This method clicks the correct button from an array of possible buttons.
         // It uses the "data-test" attribute to identify possible buttons.
         let correctIndex = this.challengeInfo.correctIndex;
@@ -192,7 +192,7 @@ class DuolingoChallenge {
         await sleep();
     }
     
-    solveWriteTextInSomeTextFieldTypeProblems() {
+    solveByTyping() {
         // This method inserts a text inside some valid text field.
         // It uses "data-test" attribute to identify the text field.
 
@@ -243,7 +243,7 @@ class DuolingoChallenge {
         }
     }
 
-    async solveTapTextTypeProblems() {
+    async solveByTapping() {
         // This method clicks the correct button from an array of possible buttons in the order required.
         // It uses the "._3CBig" class to identify possible buttons.
 
