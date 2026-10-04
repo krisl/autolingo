@@ -215,22 +215,9 @@ class DuolingoChallenge {
     async solveSelectCorrectIndexTypeProblems() {
         // This method clicks the correct button from an array of possible buttons.
         // It uses the "data-test" attribute to identify possible buttons.
-        const dataTestByChallengeType = {
-            "characterIntro": "challenge-judge-text",
-            "characterSelect": "challenge-choice",
-            "selectPronunciation": "challenge-choice",
-            "select": "challenge-choice",
-            "assist": "challenge-choice",
-            "gapFill": "challenge-choice",
-            "dialogue": "challenge-choice",
-            "readComprehension": "challenge-choice",
-            "reverseAssist": "challenge-choice",
-            "transliterationAssist": "challenge-choice"
-        }
-
         let correctIndex = this.challengeInfo.correctIndex;
-        let dataTest = dataTestByChallengeType[this.challengeInfo.type];
-        let buttons = dataTest ? this.constructor.getElementsByDataTest(dataTest) : [];
+        let dataTest = this.challengeInfo.type === "characterIntro" ? "challenge-judge-text" : "challenge-choice";
+        let buttons = this.constructor.getElementsByDataTest(dataTest);
         if (!buttons[correctIndex]) {
             window.console.logger("select: missing button", { type: this.challengeInfo.type, correctIndex });
             return;

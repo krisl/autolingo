@@ -56,3 +56,17 @@ test("tap answer still goes in when Duolingo's Howler global is missing", async 
     }).solveTapTextTypeProblems();
     assert.equal(clicks, 1);
 });
+
+for (const [type, expected] of [["characterIntro", "judge-1"], ["select", "choice-1"], ["readComprehension", "choice-1"], ["dialogue", "choice-1"]]) {
+    test(`${type}: clicks the correct option`, async (t) => {
+        const page = loadPage(LESSON_SCRIPTS, { html: `
+            <button id="judge-0" data-test="challenge-judge-text"></button><button id="judge-1" data-test="challenge-judge-text"></button>
+            <button id="choice-0" data-test="challenge-choice"></button><button id="choice-1" data-test="challenge-choice"></button>` });
+        t.after(page.close);
+        page.run(`window.sleep = () => Promise.resolve()`);
+        const clicked = [];
+        page.document.addEventListener("click", (e) => clicked.push(e.target.id));
+        await challenge(page, { type, correctIndex: 1 }).get_async_solver()();
+        assert.deepEqual(clicked, [expected]);
+    });
+}
