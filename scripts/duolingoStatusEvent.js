@@ -5,7 +5,7 @@ let prevCourse = null;
 let prevPlayerStatus = undefined;
 const possiblePageLikeTerms = ["lesson", "practice", "alphabets", "placement"];
 function pollLessonStatus() {
-    const pageData = window.getReactElement(queryFirst(SELECTORS.lessonRoot, window.document, true))?.return?.return?.memoizedProps;
+    const pageData = getPageData();
     const course = pageData?.course?.id;
 
     if (prevCourse !== course) {

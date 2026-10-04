@@ -5,8 +5,7 @@ class DuolingoChallenge {
     }
 
     get isKeyboardEnabled() {
-        // Parent object contains several information about current duolingo status;
-        const pageData = window.getReactElement(queryFirst(SELECTORS.lessonRoot))?.return?.return?.memoizedProps;
+        const pageData = getPageData();
         const result = !!pageData?.challengeToggleState?.isToggledToTyping;
         window.console.logger({isKeyboardEnabled: result})
         return result

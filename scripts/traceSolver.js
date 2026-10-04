@@ -237,12 +237,7 @@ Object.assign(DuolingoChallenge.prototype, {
     },
 
     playerStatus() {
-        try {
-            const pd = window.getReactElement(queryFirst(SELECTORS.lessonRoot, window.document, true))?.return?.return?.memoizedProps;
-            return pd?.player?.status ?? null;
-        } catch (e) {
-            return null;
-        }
+        return getPageData()?.player?.status ?? null;
     },
 
     findActiveStrokeIndex(strokes, drawn = new Set(), track = {}, preDone = new Set()) {

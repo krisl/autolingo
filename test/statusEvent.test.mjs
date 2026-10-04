@@ -16,3 +16,18 @@ test("status watcher survives page data without a course", (t) => {
     page.run("pollLessonStatus()");
     assert.deepEqual(seen, ["GUESSING"]);
 });
+
+test("status watcher still works when the lesson root class changes", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: `<button data-test="player-next"></button>` });
+    t.after(page.close);
+    setFiber(page.document.querySelector("button"), { return: { memoizedProps: {
+        player: { status: "BLAMING" }, currentChallenge: { type: "select" },
+        challengeToggleState: { isToggledToTyping: true },
+    } } });
+    const seen = [];
+    page.window.addEventListener("LessonStatusChanged", (e) => seen.push(e.detail.player.status));
+    page.run("pollLessonStatus()");
+    assert.deepEqual(seen, ["BLAMING"]);
+    assert.equal(page.run("new DuolingoChallenge({}).isKeyboardEnabled"), true);
+    assert.equal(page.run("new DuolingoChallenge({}).playerStatus()"), "BLAMING");
+});

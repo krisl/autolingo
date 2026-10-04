@@ -3,7 +3,7 @@
 // add the new name here (primary first, known-good fallbacks after) instead
 // of hunting call sites. data-test attributes are preferred: semantic, stable.
 const SELECTORS = {
-    // React lesson root (hashed class; see also duolingoStatusEvent.js).
+    // React lesson root (hashed class; read via getPageData() below).
     lessonRoot: ["._3yE3H"],
     // Footer player controls (stable data-test names).
     playerNext: ['[data-test="player-next"]'],
