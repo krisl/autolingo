@@ -19,6 +19,7 @@
             "all_frames": true,
             "js": [
                 "scripts/utils.js",
+                "scripts/selectors.js",
                 "scripts/solver.js",
                 "scripts/traceSolver.js",
                 "scripts/puzzleSolver.js",

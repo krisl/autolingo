@@ -6,9 +6,8 @@ class DuolingoChallenge {
 
     get isKeyboardEnabled() {
         // Parent object contains several information about current duolingo status;
-        const pageData = window.getReactElement(document.querySelector("._3yE3H"))?.return?.return?.memoizedProps;
-        let parentObject = pageData.challengeToggleState;
-        const result = (parentObject.isToggledToTyping)
+        const pageData = window.getReactElement(queryFirst(SELECTORS.lessonRoot))?.return?.return?.memoizedProps;
+        const result = !!pageData?.challengeToggleState?.isToggledToTyping;
         window.console.logger({isKeyboardEnabled: result})
         return result
     }
@@ -46,22 +45,27 @@ class DuolingoChallenge {
         }));
     }
 
-    // Methods for simulating user interaction.
+    // Methods for simulating user interaction (false, not throw, when absent).
     static clickButtonCheck() {
-        this.getElementsByDataTest("player-next")[0].click();
+        return clickFirst(SELECTORS.playerNext);
     }
 
     static clickButtonContinue() {
-        this.getElementsByDataTest("player-next")[0].click();
+        return clickFirst(SELECTORS.playerNext);
     }
 
     static clickButtonSkip() {
-        this.getElementsByDataTest("player-skip")[0].click();
+        return clickFirst(SELECTORS.playerSkip);
     }
 
     static insertText(textFieldDataTest, value) {
         let fieldText = this.getElementsByDataTest(textFieldDataTest)[0];
+        if (!fieldText) {
+            window.console.logger("insertText: missing field", textFieldDataTest);
+            return false;
+        }
         window.getReactElement(fieldText)?.pendingProps?.onChange({ target: { value } });
+        return true;
     }
 
     // Methods for solving the problems.
@@ -124,12 +128,15 @@ class DuolingoChallenge {
     }
     solveFromNearbyElementsButForPartialReverseTranslate() {
         const altCorrectAnswer = this.challengeInfo.displayTokens.filter(dt => dt.isBlank).map(dt => dt.text).join('')
-        const correctAnswer = parent.document.querySelector(".Id-Wa").textContent
+        const answerNode = queryFirst(SELECTORS.partialAnswer, parent.document);
+        if (!answerNode) return;
+        const correctAnswer = answerNode.textContent
         window.console.logger({altCorrectAnswer, correctAnswer})
         window.console.logger(altCorrectAnswer === correctAnswer)
 
         const altInputElement = window.document.querySelector("[data-test='challenge challenge-partialReverseTranslate'] [contenteditable=true]")
-        let inputElement = parent.document.querySelector(".tapBI");
+        let inputElement = queryFirst(SELECTORS.partialInput, parent.document);
+        if (!inputElement) return;
 
         window.console.logger({altInputElement, inputElement})
         window.console.logger(altInputElement === inputElement)
@@ -147,10 +154,13 @@ class DuolingoChallenge {
     }
 
     solveFromNearbyElementsButForTypeCloze() {
-        let correctAnswer = parent.document.querySelector(".caPDQ").textContent
+        let answerNode = queryFirst(SELECTORS.clozeAnswer, parent.document);
+        if (!answerNode) return;
+        let correctAnswer = answerNode.textContent
         //remove first character
         correctAnswer = correctAnswer.substring(1, correctAnswer.length);
-        let inputElement = parent.document.querySelector(".Y5JxA._17nEt");
+        let inputElement = queryFirst(SELECTORS.clozeInput, parent.document);
+        if (!inputElement) return;
         inputElement.textContent = correctAnswer;
 
         // Create a new 'input' event
@@ -167,6 +177,10 @@ class DuolingoChallenge {
         const correctAnswer = this.challengeInfo.displayTokens.find(dt => dt.isBlank).text
 
         let textField = this.constructor.getElementsByDataTest("challenge-text-input")[0];
+        if (!textField) {
+            window.console.logger("nearbyElements: missing text field");
+            return;
+        }
         window.getReactElement(textField)?.pendingProps?.onChange({ target: { value: correctAnswer } });
         console.logger({textField})
         window.setTimeout(() => {
@@ -176,7 +190,11 @@ class DuolingoChallenge {
     }
 
     async solveListenIsolation() {
-        const buttons = parent.document.querySelectorAll(".ufykF");
+        const buttons = parent.document.querySelectorAll(SELECTORS.listenButtons[0]);
+        if (!buttons[this.challengeInfo.correctIndex]) {
+            window.console.logger("listenIsolation: missing button", this.challengeInfo.correctIndex);
+            return;
+        }
         buttons[this.challengeInfo.correctIndex].click();
         await sleep();
     }
@@ -184,6 +202,10 @@ class DuolingoChallenge {
     writeTextInSpace() {
         let bestSolution = this.challengeInfo.challengeResponseTrackingProperties.best_solution;
         let textField = this.constructor.getElementsByDataTest("challenge-translate-input")[0];
+        if (!textField) {
+            window.console.logger("writeTextInSpace: missing text field");
+            return;
+        }
         window.getReactElement(textField)?.pendingProps?.onChange({ target: { value: bestSolution } });
     }
 
@@ -205,15 +227,28 @@ class DuolingoChallenge {
 
         let correctIndex = this.challengeInfo.correctIndex;
         let dataTest = dataTestByChallengeType[this.challengeInfo.type];
-        this.constructor.getElementsByDataTest(dataTest)[correctIndex].click();
+        let buttons = dataTest ? this.constructor.getElementsByDataTest(dataTest) : [];
+        if (!buttons[correctIndex]) {
+            window.console.logger("select: missing button", { type: this.challengeInfo.type, correctIndex });
+            return;
+        }
+        buttons[correctIndex].click();
         await sleep();
     }
     
     async solveCorrectIndicesTypeProblems(){
         let solutions = this.challengeInfo.correctIndices;
         let wordBank = this.constructor.getElementsByDataTest("word-bank")[0];
+        if (!wordBank) {
+            window.console.logger("correctIndices: missing word-bank");
+            return;
+        }
         let options = this.constructor.getElementsByDataTest("challenge-tap-token-text", wordBank);
         for (let i = 0; i < solutions.length; i++){
+            if (!options[solutions[i]]) {
+                window.console.logger("correctIndices: missing option", solutions[i]);
+                return;
+            }
             options[solutions[i]].click();
             await sleep();
         }
@@ -279,13 +314,26 @@ class DuolingoChallenge {
         console.logger({targetLanguage, specificTypeProblem})
         let correctTokens = this.challengeInfo.correctTokens ?? this.challengeInfo.prompt?.split("") ?? this.challengeInfo.correctIndices.map(i => this.challengeInfo.choices[i].text);
         let wordBank = this.constructor.getElementsByDataTest("word-bank")[0];
-        let buttonUnpressedClasses = wordBank.querySelector("button").classList.toString();
+        if (!wordBank) {
+            window.console.logger("tapText: missing word-bank");
+            return;
+        }
+        let firstButton = wordBank.querySelector("button");
+        if (!firstButton) {
+            window.console.logger("tapText: no buttons in word-bank");
+            return;
+        }
+        let buttonUnpressedClasses = firstButton.classList.toString();
         const allPossibleButtons = Array.from(wordBank.querySelectorAll("button"));
         console.logger({allPossibleButtons, correctTokens})
         for (let token of correctTokens) {
             const avaibleButtons = allPossibleButtons.filter((e) => e.classList.toString() === buttonUnpressedClasses);
             const tokensText = this.extractTextFromNodes(avaibleButtons);
             console.logger({avaibleButtons, tokensText})
+            if (!tokensText[token]) {
+                window.console.logger("tapText: missing token", token);
+                return;
+            }
             tokensText[token].click();
             if (['tap_gap', 'reverse_tap', 'listen_tap'].includes(specificTypeProblem)) {
                 console.logger("H", Howler._howls)
@@ -309,8 +357,14 @@ class DuolingoChallenge {
     async solveCharacterMatch() {
         // This method clicks the correct button from two arrays of possible buttons in the order required.
         // It uses the "._33Jbm" class to identify possible buttons.x
-        let optionsContainer = document.querySelector("div[data-test*='challenge'] > div > div > div");
-        let buttonUnpressedClasses = optionsContainer.querySelector("button").classList.toString();
+        let optionsContainer = queryFirst(SELECTORS.matchContainer);
+        if (!optionsContainer) return;
+        let firstButton = optionsContainer.querySelector("button");
+        if (!firstButton) {
+            window.console.logger("match: no buttons in container");
+            return;
+        }
+        let buttonUnpressedClasses = firstButton.classList.toString();
 
         let solutionPairs = this.challengeInfo.pairs;
         for (let pair of solutionPairs) {
@@ -318,9 +372,15 @@ class DuolingoChallenge {
             let optionNodes = allOptionsNodes.filter((e) => e.classList.toString() === buttonUnpressedClasses);
             let pairsNodeText = this.extractTextFromNodes(optionNodes);
 
-            pairsNodeText[pair.fromToken ?? pair.transliteration].click();
+            const first = pairsNodeText[pair.fromToken ?? pair.transliteration];
+            const second = pairsNodeText[pair.learningToken ?? pair.character];
+            if (!first || !second) {
+                window.console.logger("match: missing pair button", pair);
+                return;
+            }
+            first.click();
             await sleep();
-            pairsNodeText[pair.learningToken ?? pair.character].click();
+            second.click();
             await sleep();
         }
     }

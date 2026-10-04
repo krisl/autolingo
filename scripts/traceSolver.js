@@ -76,19 +76,8 @@ Object.assign(DuolingoChallenge.prototype, {
 
     findTraceElement() {
         // Prefer explicit write/trace pads over generic characterIntro cards.
-        const selectors = [
-            "[data-test='challenge challenge-characterWrite'] canvas",
-            "[data-test='challenge challenge-characterWrite'] svg",
-            "[data-test='challenge challenge-characterTrace'] canvas",
-            "[data-test='challenge challenge-characterTrace'] svg",
-            "[data-test*='characterWrite']",
-            "[data-test*='characterTrace']",
-            "[data-test*='trace']",
-            "[data-test*='write']",
-            "canvas",
-            "svg",
-        ];
-        for (const sel of selectors) {
+        // Selectors live in SELECTORS.tracePad (scripts/selectors.js).
+        for (const sel of SELECTORS.tracePad) {
             const els = Array.from(document.querySelectorAll(sel));
             // Prefer the largest visible element (the trace pad, not icons).
             const visible = els.filter((e) => {
@@ -131,16 +120,12 @@ Object.assign(DuolingoChallenge.prototype, {
     },
 
     strokeSvgRoot() {
-        return (
-            document.querySelector("[data-test='challenge challenge-characterWrite'] ._2GkiA svg") ??
-            document.querySelector("[data-test='challenge challenge-characterTrace'] ._2GkiA svg")
-        );
+        return queryFirst(SELECTORS.traceSvg);
     },
 
     playerStatus() {
         try {
-            const el = document.querySelector("._3yE3H");
-            const pd = el && window.getReactElement(el)?.return?.return?.memoizedProps;
+            const pd = window.getReactElement(queryFirst(SELECTORS.lessonRoot, window.document, true))?.return?.return?.memoizedProps;
             return pd?.player?.status ?? null;
         } catch (e) {
             return null;
@@ -159,7 +144,7 @@ Object.assign(DuolingoChallenge.prototype, {
             const norm = (s) => (s ?? "").replace(/\s+/g, " ").trim();
             const strokeDs = strokes.map((s) => norm(s.path));
             const svg = this.strokeSvgRoot();
-            const scope = svg ?? document.querySelector("[data-test='challenge challenge-characterWrite'], [data-test='challenge challenge-characterTrace']") ?? document;
+            const scope = svg ?? queryFirst(SELECTORS.challengeRoot) ?? document;
             const seen = new Map(); // strokeIdx -> {sig}
             for (const p of Array.from(scope.querySelectorAll("svg path, path"))) {
                 const d = norm(p.getAttribute("d"));
@@ -210,7 +195,7 @@ Object.assign(DuolingoChallenge.prototype, {
 
     snapshotStrokeSvg() {
         const svg = this.strokeSvgRoot();
-        const scope = svg ?? document.querySelector("[data-test='challenge challenge-characterWrite'], [data-test='challenge challenge-characterTrace']");
+        const scope = svg ?? queryFirst(SELECTORS.challengeRoot);
         if (!scope) return "";
         return Array.from(scope.querySelectorAll("path"))
             .map((p) => `${p.getAttribute("class")}|${p.getAttribute("d")?.length}`)
@@ -237,7 +222,7 @@ Object.assign(DuolingoChallenge.prototype, {
         // Match exactly (whitespace-insensitive) to sample true screen coords.
         const norm = (s) => (s ?? "").replace(/\s+/g, " ").trim();
         const want = norm(strokePath);
-        const root = document.querySelector("[data-test='challenge challenge-characterWrite'], [data-test='challenge challenge-characterTrace']") ?? document;
+        const root = queryFirst(SELECTORS.challengeRoot) ?? document;
         const paths = Array.from(root.querySelectorAll("svg path"));
         for (const p of paths) {
             if (norm(p.getAttribute("d")) === want) return p;

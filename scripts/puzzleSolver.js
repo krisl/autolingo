@@ -8,7 +8,7 @@ Object.assign(DuolingoChallenge.prototype, {
         for (const idx of this.challengeInfo.correctIndices) {
             const text = this.challengeInfo.choices[idx]?.text;
             if (text == null) continue;
-            let btn = document.querySelector(`[data-test="${text}-challenge-tap-token"]`);
+            let btn = queryFirst([`[data-test="${text}-challenge-tap-token"]`]);
             if (!btn) {
                 // Fallback: match by visible text among tap-token buttons.
                 const cands = Array.from(document.querySelectorAll('[data-test$="challenge-tap-token"]'));

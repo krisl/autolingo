@@ -46,7 +46,10 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
             //};
 
             // Insert button for solve this problem.
-            const footer = document.getElementById("session/PlayerFooter");
+            const footer = queryFirst(SELECTORS.footer);
+            if (!footer) {
+                window.console.logger("no footer, skipping solve button");
+            } else {
             footer.classList.add("autolingo-footer-div");
             //footer.classList.add(className);
             // remove any old buttons
@@ -56,30 +59,35 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
                 window.console.logger("cant solve " + currentChallange.challengeInfo.type)
             } else
             if (!footer.querySelector("button.autolingo-solve")) {
+                const sourceButton = queryFirst(SELECTORS.playerNext, footer);
+                if (!sourceButton) {
+                    window.console.logger("no player-next button to clone");
+                } else {
                 //FIXME just make our own button
-                const button = footer.querySelector("[data-test='player-next']").cloneNode(true);
+                const button = sourceButton.cloneNode(true);
                 button.removeAttribute("data-test") // dont accidentally click button
                 button.classList.remove("_2wryV") // ensure button is green
                 button.classList.remove("_2oGJR") // ensure button is blue
     
-                button.childNodes[0].innerText = "Solve"
-                button.getAttribute("data-test") === "player-next" ? button.classList.remove(button.classList[0]) : null;
+                if (button.childNodes[0]) button.childNodes[0].innerText = "Solve"
                 button.classList.add("autolingo-solve");
                 button.addEventListener("click", handleSolve);
                 // outer div classes when 3 child elements class="U8jH3 jHbiF"
-                let checkButtonSection = footer.querySelector("div").querySelector("div._3h0lA");
+                let checkButtonSection = footer.querySelector("div")?.querySelector("div._3h0lA");
                 if (!checkButtonSection) {
                     window.console.logger("creating a new button section")
                     checkButtonSection = document.createElement('div')
                     checkButtonSection.classList.add("autolingo-buttonsection");
-                    footer.querySelector("div").prepend(checkButtonSection);
+                    footer.querySelector("div")?.prepend(checkButtonSection);
                 }
-               
-                checkButtonSection.appendChild(button);    
+
+                if (checkButtonSection) checkButtonSection.appendChild(button);
 
                 //footer["autolingo_solve_button_inserted"] = true;
                 console.logger("Footer button was inserted");
+                }
             }
+            } // end else (footer present)
 
             if (document.location.search.includes("autosolve")) { await sleep(); handleSolve() };
             break;
