@@ -4,12 +4,8 @@
     "name": "Autolingo",
     "description": "Automatically completes Duolingo lessons so you don't have to!",
     "permissions": [
-        "tabs",
         "storage"
     ],
-    "background": {
-        "service_worker": "background.js"
-    },
     "action": {
         "default_title": "Autolingo",
         "default_popup": "popup/popup.html"
