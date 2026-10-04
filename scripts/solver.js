@@ -1,7 +1,6 @@
 class DuolingoChallenge {
     constructor(pageData) {
         this.challengeInfo = pageData.currentChallenge;
-        this.challengeToggleState = pageData.challengeToggleState
     }
 
     get isKeyboardEnabled() {
