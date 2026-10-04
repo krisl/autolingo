@@ -66,7 +66,8 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
                 button.classList.add("autolingo-solve");
                 button.addEventListener("click", handleSolve);
                 // outer div classes when 3 child elements class="U8jH3 jHbiF"
-                let checkButtonSection = footer.querySelector("div")?.querySelector("div._3h0lA");
+                const footerRow = footer.querySelector("div");
+                let checkButtonSection = footerRow && queryFirst(SELECTORS.buttonSection, footerRow, true);
                 if (!checkButtonSection) {
                     window.console.logger("creating a new button section")
                     checkButtonSection = document.createElement('div')

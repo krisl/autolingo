@@ -30,3 +30,18 @@ test("solve button ignores clicks while a solve is running", async (t) => {
     await tick(60);
     assert.equal(page.window.solverRuns, 2, "guard is released after the solve ends");
 });
+
+test("solve button goes into Duolingo's button section when there is one", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: `<div id="session/PlayerFooter"><div>
+        <div class="_3h0lA"><button data-test="player-next"><span>Check</span></button></div></div></div>` });
+    t.after(page.close);
+    page.window.dispatchEvent(new page.window.CustomEvent("LessonStatusChanged", {
+        detail: { player: { status: "GUESSING" }, currentChallenge: { type: "select" } } }));
+    assert.equal(page.document.querySelector("button.autolingo-solve").parentElement.className, "_3h0lA");
+});
+
+test("solve button gets its own section when Duolingo has none", (t) => {
+    const page = lessonWithStubSolver(t);
+    page.guessing();
+    assert.equal(page.solveButton().parentElement.className, "autolingo-buttonsection");
+});
