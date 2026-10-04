@@ -235,7 +235,6 @@ class DuolingoChallenge {
         }
         this.constructor.insertText(dataTest, solution);
         const tts = this.challengeInfo.solutionTts
-        // curl -v https://translate.googleapis.com/translate_tts\?client\=gtx\&ie-UTF-8\&tl\=it\&q\=ciao
         // Howl is Duolingo's audio library global, not ours: it may vanish.
         if (tts && typeof Howl === "function") {
             const howl = new Howl({ html5: true, src: tts })

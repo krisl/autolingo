@@ -11,7 +11,6 @@ window.addEventListener("LessonStatusChanged", async function ({ detail: pageDat
     if (playerStatus !== "GUESSING") return;
             const currentChallange = new DuolingoChallenge(pageData);
             currentChallange.printDebugInfo();
-	  window.console.logger('hi', {pageData})
             const solve = currentChallange.get_async_solver();
             const handleSolve = async () => {
                 if (autolingoSolving) {

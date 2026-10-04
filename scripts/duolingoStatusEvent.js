@@ -20,7 +20,7 @@ function pollLessonStatus() {
 
     prevPlayerStatus = playerStatus;
     if (playerStatus) {
-        console.log(new Date().toISOString(), "Dispatching event", pageData)
+        console.logger("Dispatching event", pageData);
         window.dispatchEvent(new CustomEvent("LessonStatusChanged", { detail: pageData }));
     }
 }
