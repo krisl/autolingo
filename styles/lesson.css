@@ -1,33 +1,5 @@
-.autolingo-progress-bar.alphabets {
-    /* Top info bar with no hearts nor extra buttons */
-    /* path: alphabets */
-    grid-template-columns: repeat(2, min-content) 1fr min-content;
-}
-
-.autolingo-progress-bar.lesson  {
-    /* Top info bar with visible hearts. */
-    /* path: lesson, legendary */
-    grid-template-columns: repeat(3, min-content) 1fr min-content;
-}
-
-.autolingo-progress-bar.practice  {
-    /* Top info bar with no hearts. */
-    /* path: practice */
-    grid-template-columns: repeat(3, min-content) 1fr min-content;
-}
-
-.autolingo-progress-bar.unit_test {
-    /* Top info bar with three hearts. */
-    /* path: unit_test */
-    grid-template-columns: repeat(2, min-content) 1fr min-content;
-}
-
 div:has([data-test*='blame']) .autolingo-solve {
     display: none;
-}
-
-button.autolingo-autosolve {
-    filter: invert(1);
 }
 
 button.autolingo-solve {
