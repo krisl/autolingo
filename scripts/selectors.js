@@ -29,8 +29,6 @@ const SELECTORS = {
     // Fill-in / cloze answer nodes (hashed classes, fragile by nature).
     partialAnswer: [".Id-Wa"],
     partialInput: [".tapBI"],
-    clozeAnswer: [".caPDQ"],
-    clozeInput: [".Y5JxA._17nEt"],
     listenButtons: [".ufykF"],
 };
 

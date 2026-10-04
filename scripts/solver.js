@@ -116,11 +116,6 @@ class DuolingoChallenge {
                 return () => this.isKeyboardEnabled ? this.solveWriteTextInSomeTextFieldTypeProblems() : this.solveFromNearbyElements();
             case "partialReverseTranslate":
                 return () => this.solveFromNearbyElementsButForPartialReverseTranslate();
-
-            //TODO: This is only commented because I don't have any problem to test it with
-            // case "typeCloze":
-            //     this.solveFromNearbyElementsButForTypeCloze();
-            //     break;
         }
     }
     solveFromNearbyElementsButForPartialReverseTranslate() {
@@ -149,26 +144,6 @@ class DuolingoChallenge {
         // Dispatch the event
         inputElement.dispatchEvent(event);
     }
-
-    solveFromNearbyElementsButForTypeCloze() {
-        let answerNode = queryFirst(SELECTORS.clozeAnswer, parent.document);
-        if (!answerNode) return;
-        let correctAnswer = answerNode.textContent
-        //remove first character
-        correctAnswer = correctAnswer.substring(1, correctAnswer.length);
-        let inputElement = queryFirst(SELECTORS.clozeInput, parent.document);
-        if (!inputElement) return;
-        inputElement.textContent = correctAnswer;
-
-        // Create a new 'input' event
-        let event = new Event('input', {
-            bubbles: true,
-            cancelable: true,
-        });
-
-        // Dispatch the event
-        inputElement.dispatchEvent(event);
-    } 
 
     solveFromNearbyElements() {
         const correctAnswer = this.challengeInfo.displayTokens.find(dt => dt.isBlank).text
