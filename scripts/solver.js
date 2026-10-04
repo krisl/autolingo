@@ -185,7 +185,11 @@ class DuolingoChallenge {
         console.logger({textField})
         window.setTimeout(() => {
             const parent = textField.parentNode.parentNode.parentNode
-            parent.innerHTML = `<textarea class="_2OQj6 _3zGeZ _394fY RpiVp" disabled>${this.challengeInfo.challengeResponseTrackingProperties.best_solution}</textarea>`
+            const solutionBox = document.createElement("textarea");
+            solutionBox.className = "_2OQj6 _3zGeZ _394fY RpiVp";
+            solutionBox.disabled = true;
+            solutionBox.textContent = this.challengeInfo.challengeResponseTrackingProperties.best_solution;
+            parent.replaceChildren(solutionBox);
         }, 1);
     }
 
