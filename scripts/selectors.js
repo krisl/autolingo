@@ -58,3 +58,21 @@ function clickFirst(selectors, root = window.document) {
     el.click();
     return true;
 }
+
+// Duolingo's lesson state (player.status, currentChallenge, course, ...),
+// read from React props. The known path is tried first; if Duolingo moves
+// things, walk up the fiber tree from stable elements until it shows up.
+function getPageData() {
+    const root = queryFirst(SELECTORS.lessonRoot, window.document, true);
+    const known = window.getReactElement(root)?.return?.return?.memoizedProps;
+    if (known?.player) return known;
+
+    for (const start of [SELECTORS.lessonRoot, SELECTORS.playerNext]) {
+        const el = queryFirst(start, window.document, true);
+        for (let fiber = window.getReactElement(el); fiber; fiber = fiber.return) {
+            const props = fiber.memoizedProps;
+            if (props?.player?.status && "currentChallenge" in props) return props;
+        }
+    }
+    return undefined;
+}
