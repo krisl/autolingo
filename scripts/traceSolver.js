@@ -86,15 +86,17 @@ Object.assign(DuolingoChallenge.prototype, {
     },
 
     findTraceElement() {
-        // Prefer explicit write/trace pads over generic characterIntro cards.
-        // Selectors live in SELECTORS.tracePad (scripts/selectors.js).
+        // Only look inside the write/trace challenge. Selectors live in
+        // SELECTORS.tracePad / challengeRoot (scripts/selectors.js).
+        const root = queryFirst(SELECTORS.challengeRoot);
+        if (!root) return null;
+        const isBig = (e) => {
+            const r = e.getBoundingClientRect?.();
+            return r && r.width > 80 && r.height > 80;
+        };
         for (const sel of SELECTORS.tracePad) {
-            const els = Array.from(document.querySelectorAll(sel));
             // Prefer the largest visible element (the trace pad, not icons).
-            const visible = els.filter((e) => {
-                const r = e.getBoundingClientRect?.();
-                return r && r.width > 80 && r.height > 80;
-            });
+            const visible = Array.from(root.querySelectorAll(sel)).filter(isBig);
             if (visible.length) {
                 visible.sort((a, b) => {
                     const ra = a.getBoundingClientRect();
@@ -105,7 +107,8 @@ Object.assign(DuolingoChallenge.prototype, {
                 return visible[0];
             }
         }
-        return null;
+        // Last resort: the challenge container itself.
+        return isBig(root) ? root : null;
     },
 
     strokeSvgRoot() {

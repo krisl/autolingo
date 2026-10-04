@@ -10,19 +10,9 @@ const SELECTORS = {
     playerSkip: ['[data-test="player-skip"]'],
     footer: ["#session\\/PlayerFooter"],
     buttonSection: ["div._3h0lA"],
-    // Hanzi trace pad candidates, most specific first.
-    tracePad: [
-        "[data-test='challenge challenge-characterWrite'] canvas",
-        "[data-test='challenge challenge-characterWrite'] svg",
-        "[data-test='challenge challenge-characterTrace'] canvas",
-        "[data-test='challenge challenge-characterTrace'] svg",
-        "[data-test*='characterWrite']",
-        "[data-test*='characterTrace']",
-        "[data-test*='trace']",
-        "[data-test*='write']",
-        "canvas",
-        "svg",
-    ],
+    // Hanzi trace pad candidates, searched only inside challengeRoot:
+    // page-wide, the largest svg can be a mascot or icon.
+    tracePad: ["canvas", "svg"],
     traceSvg: [
         "[data-test='challenge challenge-characterWrite'] ._2GkiA svg",
         "[data-test='challenge challenge-characterTrace'] ._2GkiA svg",
@@ -31,6 +21,8 @@ const SELECTORS = {
     challengeRoot: [
         "[data-test='challenge challenge-characterWrite']",
         "[data-test='challenge challenge-characterTrace']",
+        "[data-test*='characterWrite']",
+        "[data-test*='characterTrace']",
     ],
     // Pair-match options container.
     matchContainer: ["div[data-test*='challenge'] > div > div > div"],
