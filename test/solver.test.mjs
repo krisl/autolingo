@@ -26,3 +26,33 @@ test("listenComplete shows the best solution as text, not HTML", async (t) => {
     assert.equal(box.querySelector("textarea").value, best);
     assert.equal(box.querySelector("textarea").disabled, true);
 });
+
+test("typed answer still goes in when Duolingo's Howl audio global is missing", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: `<textarea data-test="challenge-translate-input"></textarea>` });
+    t.after(page.close);
+    const typed = [];
+    setFiber(page.document.querySelector("textarea"), { pendingProps: { onChange: (e) => typed.push(e.target.value) } });
+    const c = challenge(page, {
+        type: "translate",
+        challengeGeneratorIdentifier: { specificType: "translate" },
+        correctSolutions: ["ciao"],
+        solutionTts: "https://example.invalid/tts.mp3",
+    });
+    assert.doesNotThrow(() => c.solveWriteTextInSomeTextFieldTypeProblems());
+    assert.deepEqual(typed, ["ciao"]);
+});
+
+test("tap answer still goes in when Duolingo's Howler global is missing", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="word-bank">
+        <button class="tile"><span data-test="challenge-tap-token-text">ciao</span></button></div>` });
+    t.after(page.close);
+    page.run(`window.sleep = () => Promise.resolve()`);
+    let clicks = 0;
+    page.document.querySelector("button").addEventListener("click", () => clicks++);
+    await challenge(page, {
+        type: "listenTap",
+        challengeGeneratorIdentifier: { specificType: "listen_tap" },
+        correctTokens: ["ciao"],
+    }).solveTapTextTypeProblems();
+    assert.equal(clicks, 1);
+});

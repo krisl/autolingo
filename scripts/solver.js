@@ -285,7 +285,8 @@ class DuolingoChallenge {
         this.constructor.insertText(dataTest, solution);
         const tts = this.challengeInfo.solutionTts
         // curl -v https://translate.googleapis.com/translate_tts\?client\=gtx\&ie-UTF-8\&tl\=it\&q\=ciao
-        if (tts) {
+        // Howl is Duolingo's audio library global, not ours: it may vanish.
+        if (tts && typeof Howl === "function") {
             const howl = new Howl({ html5: true, src: tts })
             howl.play()
         }
@@ -322,9 +323,8 @@ class DuolingoChallenge {
             }
             tokensText[token].click();
             if (['tap_gap', 'reverse_tap', 'listen_tap'].includes(specificTypeProblem)) {
-                console.logger("H", Howler._howls)
                 await sleep(200);
-                const howl = Howler._howls.find(obj => obj.playing())
+                const howl = window.Howler?._howls?.find(obj => obj.playing())
                 if (howl) {
                     const duration = howl.duration()
                     const currentPos = howl.seek()
