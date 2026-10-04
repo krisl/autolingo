@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Autolingo</title>
+  <link rel="stylesheet" type="text/css" href="popup.css">
+</head>
+<body>
+  <div class="topbar">
+    <img class="topbar-logo" src="../icons/icon-48.png" alt="">
+    <div class="topbar-text">Autolingo</div>
+  </div>
+  <div class="content">
+    <label class="row">
+      <span>Hanzi size <span id="hanzi-value" class="value"></span></span>
+      <input id="hanzi-slider" type="range" min="100" max="200" step="5">
+    </label>
+    <label class="row">
+      <span>Pinyin size <span id="pinyin-value" class="value"></span></span>
+      <input id="pinyin-slider" type="range" min="80" max="160" step="5">
+    </label>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -41,3 +41,19 @@ div.autolingo-buttonsection {
 div.autolingo-footer-div div.autolingo-buttonsection {
     display: block;
 }
+
+/* Larger Hanzi + pinyin: Chinese reads small next to Latin/Cyrillic.
+   Scales live-tunable from the extension popup (CSS vars set by
+   scripts/displaySettings.js). `:not(...)` picks only the outermost
+   [lang] element so nested spans don't compound the scaling. */
+[lang="zh"]:not([lang="zh"] [lang="zh"]),
+[lang^="zh-"]:not([lang] [lang]),
+[lang*="pinyin"]:not([lang] [lang]) {
+    font-size: calc(var(--al-hanzi, 1.35) * 100%) !important;
+    line-height: 1.5 !important;
+}
+
+rt,
+[data-test*="transliteration"] {
+    font-size: calc(var(--al-pinyin, 1) * 100%) !important;
+}
