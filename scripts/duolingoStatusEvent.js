@@ -4,9 +4,9 @@
 let prevCourse = null;
 let prevPlayerStatus = undefined;
 const possiblePageLikeTerms = ["lesson", "practice", "alphabets", "placement"];
-setInterval(function () {
+function pollLessonStatus() {
     const pageData = window.getReactElement(queryFirst(SELECTORS.lessonRoot, window.document, true))?.return?.return?.memoizedProps;
-    const course = pageData?.course.id;
+    const course = pageData?.course?.id;
 
     if (prevCourse !== course) {
         prevCourse = course;
@@ -23,4 +23,5 @@ setInterval(function () {
         console.log(new Date().toISOString(), "Dispatching event", pageData)
         window.dispatchEvent(new CustomEvent("LessonStatusChanged", { detail: pageData }));
     }
-}, 500);
+}
+setInterval(pollLessonStatus, 500);
