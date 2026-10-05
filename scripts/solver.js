@@ -312,8 +312,9 @@ class DuolingoChallenge {
             const first = pairsNodeText[pair.fromToken ?? pair.transliteration];
             const second = pairsNodeText[pair.learningToken ?? pair.character];
             if (!first || !second) {
-                window.console.logger("match: missing pair button", pair);
-                return;
+                // Already matched (manually or earlier): buttons leave the bank.
+                window.console.logger("match: pair already done, skipping", pair);
+                continue;
             }
             first.click();
             await sleep();
