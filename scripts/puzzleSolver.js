@@ -17,7 +17,21 @@ Object.assign(DuolingoChallenge.prototype, {
             }
             window.console.logger({ tapTokenTap: text, found: !!btn });
             btn?.click();
-            await sleep(300);
+            // Let the syllable audio finish (e.g. 白 "bái") before the next
+            // tap cuts it off. No audio playing (svgPuzzle radicals) = short wait.
+            await sleep(200);
+            let playing = null;
+            try {
+                playing = typeof Howler !== "undefined"
+                    ? Howler._howls.find((o) => { try { return o.playing(); } catch (e) { return false; } })
+                    : null;
+            } catch (e) { playing = null; }
+            if (playing) {
+                const remaining = playing.duration() - playing.seek();
+                await sleep(Math.max(200, remaining * 1000 - 900));
+            } else {
+                await sleep(150);
+            }
         }
     },
 });
