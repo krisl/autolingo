@@ -97,7 +97,8 @@ class DuolingoChallenge {
                 return () => this.solveByTapping();
 
             case "svgPuzzle":
-                return () => this.solveSvgPuzzle();
+            case "syllableTap":
+                return () => this.solveTapTokensInOrder();
 
             case "characterTrace":
             case "characterWrite":

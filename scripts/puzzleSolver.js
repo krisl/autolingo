@@ -1,10 +1,11 @@
-// svgPuzzle solver (e.g. Chinese hanzi assembled from radical pieces).
+// svgPuzzle / syllableTap solver: tap token pieces in correctIndices order.
 // Loaded after scripts/solver.js; attaches to DuolingoChallenge.prototype.
 Object.assign(DuolingoChallenge.prototype, {
 
-    async solveSvgPuzzle() {
-        // Tap radical pieces in correctIndices order.
-        // Buttons carry data-test="{text}-challenge-tap-token".
+    async solveTapTokensInOrder() {
+        // svgPuzzle (e.g. Chinese 裙 = 衤 + ... radicals), syllableTap
+        // (e.g. white = 白 + 色 syllables): tap pieces in correctIndices
+        // order. Buttons carry data-test="{text}-challenge-tap-token".
         for (const idx of this.challengeInfo.correctIndices) {
             const text = this.challengeInfo.choices[idx]?.text;
             if (text == null) continue;
@@ -14,7 +15,7 @@ Object.assign(DuolingoChallenge.prototype, {
                 const cands = Array.from(document.querySelectorAll('[data-test$="challenge-tap-token"]'));
                 btn = cands.find((b) => (b.textContent ?? "").includes(text));
             }
-            window.console.logger({ svgPuzzleTap: text, found: !!btn });
+            window.console.logger({ tapTokenTap: text, found: !!btn });
             btn?.click();
             await sleep(300);
         }
