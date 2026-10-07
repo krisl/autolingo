@@ -108,9 +108,8 @@ async function runTraceLoop(t, { strokes, highlight, active, accepted = [] }) {
         doneStrokeIndices: () => new Set(),
         playerStatus: () => "GUESSING",
         snapshotStrokeSvg: () => "",
-        waitForQuiescent: async () => {},
         dispatchStroke: async (_el, _pts, path) => drawn.push(Number(path.split(/[ ,]/)[1])),
-        waitForStrokeAccepted: async () => accepted.shift() ?? true,
+        waitForStrokeDone: async () => accepted.shift() ?? true,
         findActiveStrokeIndex: (_s, _d, track) => {
             track.highlight = highlight;
             return active.shift() ?? -1;
@@ -299,6 +298,38 @@ test("guardrail: a part-way stroke resumes at the marker; a marker elsewhere is 
     assert.deepEqual(xs(c.resumeAtMarker(moves, { clientX: 0, clientY: 0 })), xs(moves), "marker at start");
     assert.deepEqual(xs(c.resumeAtMarker(moves, { clientX: 50, clientY: 50 })), xs(moves), "marker on another stroke");
     assert.deepEqual(xs(c.resumeAtMarker(moves, null)), xs(moves));
+});
+
+test("guardrail: a marker right next to the end still drags to the end", (t) => {
+    const page = loadPage(LESSON_SCRIPTS);
+    t.after(page.close);
+    const moves = Array.from({ length: 11 }, (_, k) => ({ clientX: k * 2, clientY: 0 }));
+    const out = challenge(page).resumeAtMarker(moves, { clientX: 19.5, clientY: 0 });
+    assert.deepEqual(Array.from(out, (p) => p.clientX), [19.5, 20]);
+});
+
+test("pen overshoots the end by 1-3px along the final direction", (t) => {
+    const page = loadPage(LESSON_SCRIPTS);
+    t.after(page.close);
+    page.window.MOVES = [{ clientX: 0, clientY: 0 }, { clientX: 3, clientY: 4 }, { clientX: 3.0001, clientY: 4 }];
+    const out = JSON.parse(page.run("JSON.stringify(DuolingoChallenge.overshoot(window.MOVES))"));
+    const r = (v) => Math.round(v * 100) / 100;
+    assert.deepEqual(out.map((p) => [r(p.clientX), r(p.clientY)]), [[3.6, 4.8], [4.2, 5.6], [4.8, 6.4]]);
+});
+
+test("guardrail: next stroke starts as soon as the target moves on, not after a quiet period", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: GR_HTML });
+    t.after(page.close);
+    const c = challenge(page, { strokes: GR_STROKES });
+    const track = {};
+    const drawn = new Set([1]);
+    c.findActiveStrokeIndex(GR_STROKES, drawn, track, new Set());
+    setTimeout(() => {
+        for (const p of page.document.querySelectorAll("._22UPm, ._1e5Zt")) p.setAttribute("d", GR_STROKES[2].path);
+    }, 20);
+    const t0 = Date.now();
+    assert.equal(await c.waitForStrokeDone(page.document.querySelector("svg"), GR_STROKES, 1, "", drawn, track, new Set()), true);
+    assert.ok(Date.now() - t0 < 200, `took ${Date.now() - t0}ms`);
 });
 
 test("stroke accepted: resolves on the svg change, not on a polling tick", async (t) => {

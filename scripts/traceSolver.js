@@ -51,10 +51,7 @@ Object.assign(DuolingoChallenge.prototype, {
             const points = this.constructor.parseSvgPathToPoints(strokes[i].path, 24);
             await this.dispatchStroke(traceEl, points, strokes[i].path);
             drawn.add(i);
-            const accepted = await this.waitForStrokeAccepted(traceEl, i, before);
-            // Let validation animations finish: starting the next stroke
-            // while the quiz is still settling gets it silently ignored.
-            await this.waitForQuiescent();
+            const accepted = await this.waitForStrokeDone(traceEl, strokes, i, before, drawn, track, preDone);
             const next = this.findActiveStrokeIndex(strokes, drawn, track, preDone);
             // Highlight mode: the highlight must move (or vanish = complete);
             // unmoved = invalid stroke. Order mode: trust the ink check.
@@ -282,9 +279,9 @@ Object.assign(DuolingoChallenge.prototype, {
     },
 
     waitForSvgChange(test, timeout) {
-        // Resolves true as soon as test() holds after a class/d/child change
-        // in the stroke svg (the parts snapshotStrokeSvg covers), false on
-        // timeout. Reacts at once instead of on a polling tick.
+        // Resolves true as soon as test() holds after a class/d/transform/
+        // child change in the stroke svg (transform: the pen marker moves),
+        // false on timeout. Reacts at once instead of on a polling tick.
         if (test()) return Promise.resolve(true);
         const scope = this.strokeSvgRoot() ?? queryFirst(SELECTORS.challengeRoot);
         if (!scope) return sleep(timeout).then(test);
@@ -292,8 +289,43 @@ Object.assign(DuolingoChallenge.prototype, {
             const finish = (v) => { obs.disconnect(); clearTimeout(timer); resolve(v); };
             const obs = new MutationObserver(() => { if (test()) finish(true); });
             const timer = setTimeout(() => finish(test()), timeout);
-            obs.observe(scope, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "d"] });
+            obs.observe(scope, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "d", "transform"] });
         });
+    },
+
+    async waitForStrokeDone(traceEl, strokes, i, before, drawn, track, preDone) {
+        // After drawing stroke i: wait until the quiz is ready for the next
+        // one. Returns whether stroke i looks accepted.
+        if (track.highlight) {
+            // Ready as soon as the highlight leaves stroke i and the pen
+            // marker reaches the next stroke's start (a fixed quiet period
+            // before showed as a pause before every stroke).
+            const active = () => this.findActiveStrokeIndex(strokes, drawn, track, preDone);
+            const moved = await this.waitForSvgChange(() => active() !== i, 1000);
+            if (moved) await this.waitForMarkerAtStroke(traceEl, strokes, active());
+            return moved;
+        }
+        const accepted = await this.waitForStrokeAccepted(traceEl, i, before);
+        // Let validation animations finish: starting the next stroke while
+        // the quiz is still settling gets it silently ignored.
+        await this.waitForQuiescent();
+        return accepted;
+    },
+
+    async waitForMarkerAtStroke(traceEl, strokes, idx, timeout = 800) {
+        // The pen marker moves to the next stroke's start once the quiz is
+        // ready for it; a drag that starts before then grabs nothing.
+        if (idx < 0) return;
+        const guide = this.findGuidePathEl(strokes[idx].path);
+        const start = guide ? this.sampleGuidePathClientCoords(guide, 1000)?.[0] : null;
+        const pad = traceEl.tagName?.toLowerCase() === "svg" ? traceEl : traceEl.querySelector("svg") ?? traceEl;
+        if (!start || !this.markerClientPoint(pad)) return;
+        const there = () => {
+            const m = this.markerClientPoint(pad);
+            return !!m && Math.hypot(m.clientX - start.clientX, m.clientY - start.clientY) < 4;
+        };
+        const ok = await this.waitForSvgChange(there, timeout);
+        window.console.logger({ markerAtStroke: idx, ok });
     },
 
     async waitForStrokeAccepted(traceEl, idx, before) {
@@ -404,7 +436,9 @@ Object.assign(DuolingoChallenge.prototype, {
             const d = Math.hypot(m.clientX - marker.clientX, m.clientY - marker.clientY);
             if (d < bestDist) { bestDist = d; best = k; }
         });
-        return best > 0 ? [marker, ...moves.slice(best + 1)] : moves;
+        if (best <= 0) return moves;
+        // Always end at the real end, even when the marker sits next to it.
+        return [marker, ...(best < moves.length - 1 ? moves.slice(best + 1) : moves.slice(-1))];
     },
 
     async playMoves(moves, onMove) {
@@ -456,7 +490,12 @@ Object.assign(DuolingoChallenge.prototype, {
             moves = dense.map(toClient);
         }
         const pad = svgRoot ?? traceEl;
-        moves = this.constructor.simplifyMoves(this.resumeAtMarker(moves, this.markerClientPoint(pad)));
+        // Carry the pen a few px past the end: the marker lags the pen and
+        // stopped 1-2.5px short when released at the end (identical
+        // repeated moves did not advance it). It cannot pass the end, so
+        // the overshoot pulls it all the way.
+        const overshoot = this.constructor.overshoot(moves);
+        moves = [...this.constructor.simplifyMoves(this.resumeAtMarker(moves, this.markerClientPoint(pad))), ...overshoot];
         const first = moves[0];
         const last = moves[moves.length - 1];
         window.console.logger({ guideUsed, movePoints: moves.length });
@@ -482,9 +521,7 @@ Object.assign(DuolingoChallenge.prototype, {
         mouse("mousemove", first, 0);
         await sleep(20);
         mouse("mousedown", first, 1);
-        // Hold at the end for a few frames: the marker lags the pen and
-        // stopped ~2.5px short of the end when released at once.
-        await this.playMoves([...moves, last, last, last], (c) => mouse("mousemove", c, 1));
+        await this.playMoves(moves, (c) => mouse("mousemove", c, 1));
         mouse("mouseup", last, 0);
         window.console.logger({ strokeDrawn: moves.length });
     },
@@ -623,6 +660,18 @@ Object.assign(DuolingoChallenge, {
             i = j;
         }
         return out;
+    },
+
+    overshoot(moves, steps = [1, 2, 3]) {
+        // Points `steps` px past the last move, along the stroke's final
+        // direction (taken over the last >= 2px, so jitter cannot skew it).
+        const last = moves[moves.length - 1];
+        for (let k = moves.length - 2; k >= 0; k--) {
+            const dx = last.clientX - moves[k].clientX, dy = last.clientY - moves[k].clientY;
+            const len = Math.hypot(dx, dy);
+            if (len >= 2) return steps.map((d) => ({ clientX: last.clientX + (dx / len) * d, clientY: last.clientY + (dy / len) * d }));
+        }
+        return [];
     },
 
     interpolatePoints(points, step = 2) {
