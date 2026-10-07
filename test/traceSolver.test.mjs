@@ -141,3 +141,29 @@ test("trace loop, order mode: an accepted stroke resets the reject count", async
     const r = await runTraceLoop(t, { strokes: [0, 1, 2, 3, 4], highlight: null, active: [0, 1, 2, 3, 4, -1], accepted: [false, false, true, false, false] });
     assert.deepEqual(r, { drawn: [0, 1, 2, 3, 4], alerts: [] });
 });
+
+// Real characterWrite state for 马: stroke 0 is PREDRAWN ink ("_1vFJk"),
+// stroke 1 is the target ("_22UPm"), stroke 2 is not rendered yet. Both
+// classes sit on one stroke each; the ink must not win as the highlight.
+const MA_STROKES = [
+    { path: "M 29.54,18.60 C 31.72,18.48,64.15,14.40,66.28,14.40 C 69.39,14.40,70.95,16.38,70.65,18.33 C 70.47,19.51,68.31,27.62,65.99,41.38", strokeDrawMode: "PREDRAWN" },
+    { path: "M 31.75,18.98 C 32.20,19.42,32.69,21.74,32.69,22.47 C 32.64,29.80,32.51,59.02,32.16,57.08 C 46.49,55.15,76.82,52.34,84.76,51.75 C 89.92,51.37,92.16,52.70,91.60,57.04 C 89.67,72.29,85.51,83.51,82.27,89.56 C 76.65,100.06,74.25,96.13,69.03,90.03", strokeDrawMode: "FREEHAND" },
+    { path: "M 20.55,73.86 C 34.36,72.96,66.68,70.31,72.61,69.75 C 74.70,69.57,78.21,69.39,79.27,69.64", strokeDrawMode: "FREEHAND" },
+];
+const MA_HTML = `<div data-test="challenge challenge-characterWrite"><div class="_2GkiA"><svg viewBox="0 0 307 307">
+    <path class="cNV1w" d="M 0 153.5 H 307"></path>
+    <path class="cNV1w" d="M 153.5 0 V 307"></path>
+    <g><path class="_1vFJk" d="${MA_STROKES[0].path}" pathLength="1"></path><path class="_22UPm" d="${MA_STROKES[1].path}"></path></g>
+    <path class="_1vFJk" d="" pathLength="1"></path>
+</svg></div></div>`;
+
+test("write: PREDRAWN ink is never the highlight", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
+    t.after(page.close);
+    const c = challenge(page, { strokes: MA_STROKES });
+    const preDone = c.doneStrokeIndices(MA_STROKES);
+    assert.ok(preDone.has(0), "stroke 0 is pre-drawn");
+    const track = {};
+    assert.equal(c.findActiveStrokeIndex(MA_STROKES, new Set(), track, preDone), 1);
+    assert.equal(track.highlight, "_22UPm");
+});

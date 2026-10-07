@@ -108,9 +108,13 @@ Object.assign(DuolingoChallenge.prototype, {
         // singleton overlay class): among its other classes, the widest
         // coverage wins. Without any singleton, fall back to majority.
         // Lone extra copies (coverage 1) are overlays, never guides.
+        // Classes on PREDRAWN strokes are finished ink, never guides.
         // Redrawing done strokes counts as a mistake, so skip them.
+        const ink = this.inkClasses(strokes);
         const classSets = strokes.map(() => new Set());
-        for (const { idx, cls } of this.strokePaths(strokes)) classSets[idx].add(cls);
+        for (const { idx, cls } of this.strokePaths(strokes)) {
+            if (!ink.has(cls)) classSets[idx].add(cls);
+        }
         const coverage = new Map(); // class -> Set(idxs)
         classSets.forEach((set, i) => {
             for (const c of set) {
@@ -145,7 +149,7 @@ Object.assign(DuolingoChallenge.prototype, {
             guideClass = tieredBest(ranked.map((r) => r.c))?.c ?? null; // majority fallback
         }
         window.console.logger({ classCoverage: ranked, guideClass });
-        const done = new Set();
+        const done = new Set(strokes.flatMap((s, i) => (s.strokeDrawMode === "PREDRAWN" ? [i] : [])));
         if (guideClass) {
             classSets.forEach((set, i) => { if (!set.has(guideClass)) done.add(i); });
         }
@@ -164,6 +168,17 @@ Object.assign(DuolingoChallenge.prototype, {
                 el,
             }))
             .filter((p) => p.idx >= 0);
+    },
+
+    inkClasses(strokes) {
+        // Classes of rendered PREDRAWN strokes (characterWrite data marks
+        // them). That class is finished ink: in write mode it can sit on a
+        // single stroke and look like the highlight.
+        const ink = new Set();
+        for (const { idx, cls } of this.strokePaths(strokes)) {
+            if (strokes[idx].strokeDrawMode === "PREDRAWN") ink.add(cls);
+        }
+        return ink;
     },
 
     strokeGuides(strokes) {
@@ -215,7 +230,8 @@ Object.assign(DuolingoChallenge.prototype, {
             if (track.highlight === undefined) {
                 const bySig = {};
                 for (const [idx, { sig }] of seen) (bySig[sig] ??= []).push(idx);
-                const singles = Object.entries(bySig).filter(([, a]) => a.length === 1);
+                const ink = this.inkClasses(strokes);
+                const singles = Object.entries(bySig).filter(([sig, a]) => a.length === 1 && !ink.has(sig));
                 singles.sort((a, b) => Math.min(...a[1]) - Math.min(...b[1]));
                 track.highlight = singles.length ? singles[0][0] : null;
                 window.console.logger({ highlightMode: track.highlight });
