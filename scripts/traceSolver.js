@@ -30,8 +30,9 @@ Object.assign(DuolingoChallenge.prototype, {
 
         // 2. Replay strokes synthetically. Re-detect the quiz's active stroke
         // before every draw and stop when nothing remains: extra strokes
-        // after completion count as mistakes (BLAMING). Single attempt per
-        // stroke; abort after 3 consecutive rejects to save hearts.
+        // after completion count as mistakes (BLAMING). Highlight mode
+        // retries a stroke the highlight did not leave (GUARDRAIL strokes
+        // can stop part-way); abort after 3 consecutive rejects to save hearts.
         const drawn = new Set();
         const track = { highlight: undefined }; // undefined=undetected, null=order mode, string=highlight class
         const preDone = this.doneStrokeIndices(strokes);
@@ -39,7 +40,7 @@ Object.assign(DuolingoChallenge.prototype, {
         let i = this.findActiveStrokeIndex(strokes, drawn, track, preDone);
         window.console.logger({ startIdx: i });
         let rejects = 0;
-        while (i >= 0 && i < strokes.length && drawn.size < strokes.length) {
+        for (let attempt = 0; i >= 0 && i < strokes.length && attempt < strokes.length * 2 + 3; attempt++) {
             if (!traceEl.isConnected) return;
             const st = this.playerStatus();
             if (st && st !== "GUESSING") {
@@ -48,7 +49,7 @@ Object.assign(DuolingoChallenge.prototype, {
             }
             const before = this.snapshotStrokeSvg();
             const points = this.constructor.parseSvgPathToPoints(strokes[i].path, 24);
-            await this.dispatchStroke(traceEl, points, strokes[i].path, 2);
+            await this.dispatchStroke(traceEl, points, strokes[i].path);
             drawn.add(i);
             const accepted = await this.waitForStrokeAccepted(traceEl, i, before);
             // Let validation animations finish: starting the next stroke
@@ -111,6 +112,14 @@ Object.assign(DuolingoChallenge.prototype, {
         // Classes on PREDRAWN strokes are finished ink, never guides.
         // Redrawing done strokes counts as a mistake, so skip them.
         const ink = this.inkClasses(strokes);
+        if (this.isFreehand(strokes)) {
+            // Write mode has no guides and renders future strokes only when
+            // they become the target: done = PREDRAWN or rendered as ink.
+            const done = new Set(strokes.flatMap((s, i) => (s.strokeDrawMode === "PREDRAWN" ? [i] : [])));
+            for (const { idx, cls } of this.strokePaths(strokes)) if (ink.has(cls)) done.add(idx);
+            window.console.logger({ writeDone: [...done], ink: [...ink] });
+            return done;
+        }
         const classSets = strokes.map(() => new Set());
         for (const { idx, cls } of this.strokePaths(strokes)) {
             if (!ink.has(cls)) classSets[idx].add(cls);
@@ -170,13 +179,24 @@ Object.assign(DuolingoChallenge.prototype, {
             .filter((p) => p.idx >= 0);
     },
 
+    isFreehand(strokes) {
+        // characterWrite data: strokes to draw without a guide are FREEHAND.
+        return strokes.some((s) => s.strokeDrawMode === "FREEHAND");
+    },
+
     inkClasses(strokes) {
-        // Classes of rendered PREDRAWN strokes (characterWrite data marks
-        // them). That class is finished ink: in write mode it can sit on a
-        // single stroke and look like the highlight.
+        // Classes of finished ink. Ink can sit on a single stroke and look
+        // like the highlight. Ink = rendered PREDRAWN strokes and any path
+        // with pathLength (Duolingo animates ink with it, guide and target
+        // paths have none; seen in FREEHAND and GUARDRAIL; includes the
+        // in-progress ink path, so it works before any stroke).
         const ink = new Set();
         for (const { idx, cls } of this.strokePaths(strokes)) {
             if (strokes[idx].strokeDrawMode === "PREDRAWN") ink.add(cls);
+        }
+        const scope = this.strokeSvgRoot() ?? queryFirst(SELECTORS.challengeRoot) ?? document;
+        for (const p of scope.querySelectorAll("path")) {
+            if (p.hasAttribute("pathLength")) ink.add(`${p.getAttribute("class")}`);
         }
         return ink;
     },
@@ -221,28 +241,25 @@ Object.assign(DuolingoChallenge.prototype, {
         //   the next; when it vanishes, the trace is complete (-1).
         // - order mode: all guides look the same (fresh char). Draw smallest
         //   undrawn index (stroke order) until status/disconnect stops us.
-        // Never redraws a drawn stroke. Returns -1 when nothing remains.
+        // The highlight is searched among ALL rendered paths: it is often a
+        // second path on top of the stroke's guide (GUARDRAIL: "_287Na"
+        // guide + "_22UPm" target). Highlight mode may return a drawn
+        // stroke (= rejected, retry); order mode never redraws.
+        // Returns -1 when nothing remains.
         try {
-            const seen = this.strokeGuides(strokes);
-            const counts = {};
-            for (const { sig } of seen.values()) counts[sig] = (counts[sig] ?? 0) + 1;
-            window.console.logger({ guideClasses: Object.entries(counts), guideCount: seen.size });
+            const bySig = {};
+            for (const { idx, cls } of this.strokePaths(strokes)) (bySig[cls] ??= new Set()).add(idx);
             if (track.highlight === undefined) {
-                const bySig = {};
-                for (const [idx, { sig }] of seen) (bySig[sig] ??= []).push(idx);
                 const ink = this.inkClasses(strokes);
-                const singles = Object.entries(bySig).filter(([sig, a]) => a.length === 1 && !ink.has(sig));
+                const singles = Object.entries(bySig).filter(([sig, a]) => a.size === 1 && !ink.has(sig));
                 singles.sort((a, b) => Math.min(...a[1]) - Math.min(...b[1]));
                 track.highlight = singles.length ? singles[0][0] : null;
-                window.console.logger({ highlightMode: track.highlight });
+                window.console.logger({ highlightMode: track.highlight, classes: Object.keys(bySig) });
             }
             if (track.highlight) {
                 // Highlighted stroke is by definition not done; preDone only
                 // gates order mode below.
-                const hits = [...seen.entries()]
-                    .filter(([idx, { sig }]) => sig === track.highlight && !drawn.has(idx))
-                    .map(([idx]) => idx)
-                    .sort((a, b) => a - b);
+                const hits = [...(bySig[track.highlight] ?? [])].sort((a, b) => a - b);
                 return hits.length ? hits[0] : -1;
             }
             for (let k = 0; k < strokes.length; k++) {
@@ -264,31 +281,39 @@ Object.assign(DuolingoChallenge.prototype, {
             .join(";");
     },
 
-    async waitForStrokeAccepted(traceEl, idx, before) {
-        // Snapshot was taken BEFORE drawing; poll for any change (ink
-        // appears during validation, which can lag pointer events).
-        for (let t = 0; t < 1200; t += 150) {
-            await sleep(150);
-            const after = this.snapshotStrokeSvg();
-            if (after !== before) {
-                window.console.logger({ strokeAcceptedPoll: idx, accepted: true });
-                return true;
-            }
-        }
-        window.console.logger({ strokeAcceptedPoll: idx, accepted: false });
-        return false;
+    waitForSvgChange(test, timeout) {
+        // Resolves true as soon as test() holds after a class/d/child change
+        // in the stroke svg (the parts snapshotStrokeSvg covers), false on
+        // timeout. Reacts at once instead of on a polling tick.
+        if (test()) return Promise.resolve(true);
+        const scope = this.strokeSvgRoot() ?? queryFirst(SELECTORS.challengeRoot);
+        if (!scope) return sleep(timeout).then(test);
+        return new Promise((resolve) => {
+            const finish = (v) => { obs.disconnect(); clearTimeout(timer); resolve(v); };
+            const obs = new MutationObserver(() => { if (test()) finish(true); });
+            const timer = setTimeout(() => finish(test()), timeout);
+            obs.observe(scope, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "d"] });
+        });
     },
 
-    async waitForQuiescent(timeout = 1500) {
+    async waitForStrokeAccepted(traceEl, idx, before) {
+        // Snapshot was taken BEFORE drawing; wait for any change (ink
+        // appears during validation, which can lag pointer events).
+        const accepted = await this.waitForSvgChange(() => this.snapshotStrokeSvg() !== before, 1200);
+        window.console.logger({ strokeAcceptedPoll: idx, accepted });
+        return accepted;
+    },
+
+    async waitForQuiescent(timeout = 1500, quietMs = 300) {
         // Validation animations settle asynchronously; the next stroke's
-        // pointerdown landing mid-animation is silently ignored.
-        let prev = this.snapshotStrokeSvg();
+        // pointerdown landing mid-animation is silently ignored. Done once
+        // the svg has not changed for quietMs. Not shorter: reading the
+        // highlight before it moves redraws the same stroke (a mistake);
+        // the old polling never read it sooner than 300ms after pointerup.
         const t0 = Date.now();
         while (Date.now() - t0 < timeout) {
-            await sleep(150);
-            const cur = this.snapshotStrokeSvg();
-            if (cur === prev) return;
-            prev = cur;
+            const prev = this.snapshotStrokeSvg();
+            if (!await this.waitForSvgChange(() => this.snapshotStrokeSvg() !== prev, quietMs)) return;
         }
     },
 
@@ -324,11 +349,14 @@ Object.assign(DuolingoChallenge.prototype, {
         return null;
     },
 
-    sampleGuidePathClientCoords(guideEl, n = 60) {
+    sampleGuidePathClientCoords(guideEl, spacingPx = 3) {
+        // One point every ~spacingPx screen pixels: fixed counts left long
+        // strokes with visible steps.
         try {
             const len = guideEl.getTotalLength();
             const ctm = guideEl.getScreenCTM();
             if (!len || !ctm) return null;
+            const n = Math.max(8, Math.ceil((len * Math.hypot(ctm.a, ctm.b)) / spacingPx));
             const out = [];
             for (let k = 0; k <= n; k++) {
                 const pt = guideEl.getPointAtLength((len * k) / n);
@@ -342,7 +370,40 @@ Object.assign(DuolingoChallenge.prototype, {
         }
     },
 
-    async dispatchStroke(traceEl, points, strokePath = null, stepMs = 8) {
+    strokeBoxToClient(points) {
+        // Map stroke-box points (e.g. 0..109) to client coords through the
+        // screen transform of the box: from a rendered stroke path, else
+        // the scaled group that holds them. Exact even when the box does
+        // not fill the pad (马: 287px box centered in a 307px pad).
+        // Returns null when no transform is available.
+        const svg = this.strokeSvgRoot();
+        if (!svg) return null;
+        const el = this.strokePaths(this.challengeInfo.strokes ?? [])[0]?.el ?? svg.querySelector("g[transform]");
+        let m = null;
+        try { m = el?.getScreenCTM?.() ?? null; } catch (e) { m = null; }
+        if (!m) return null;
+        return points.map(([x, y]) => ({ clientX: m.a * x + m.c * y + m.e, clientY: m.b * x + m.d * y + m.f }));
+    },
+
+    async playMoves(moves, onMove) {
+        // ONE move per animation frame, like real touch input (browsers
+        // coalesce moves per frame); several per frame each force a layout
+        // in Duolingo's handler ("[Violation] Forced reflow") and the ink
+        // stutters. Step sizes come from simplifyMoves. rAF stalls in a
+        // hidden tab, so a timer backs it up.
+        const frame = () => new Promise((r) => {
+            const timer = setTimeout(r, 50);
+            window.requestAnimationFrame?.(() => { clearTimeout(timer); r(); });
+        });
+        const t0 = performance.now();
+        for (let k = 1; k < moves.length; k++) {
+            await frame();
+            onMove(moves[k], moves[k - 1]);
+        }
+        window.console.logger({ moves: moves.length, strokeMs: Math.round(performance.now() - t0) });
+    },
+
+    async dispatchStroke(traceEl, points, strokePath = null) {
         if (!points.length) return;
         const svgRoot = traceEl.tagName?.toLowerCase() === "svg" ? traceEl : traceEl.querySelector("svg");
         const boxW = this.challengeInfo.width || 109;
@@ -359,64 +420,43 @@ Object.assign(DuolingoChallenge.prototype, {
         let guideUsed = false;
         if (strokePath) {
             const guideEl = this.findGuidePathEl(strokePath);
-            const sampled = guideEl ? this.sampleGuidePathClientCoords(guideEl, 36) : null;
+            const sampled = guideEl ? this.sampleGuidePathClientCoords(guideEl, 2) : null;
             if (sampled?.length) {
                 moves = sampled;
                 guideUsed = true;
             }
         }
+        const dense = moves ? null : this.constructor.interpolatePoints(points, 0.75);
+        if (!moves) moves = this.strokeBoxToClient(dense);
         if (!moves) {
-            // Fallback: dense box-math polyline (~2px steps).
-            const dense = this.constructor.interpolatePoints(points, 2);
-            moves = [toClient(dense[0]), ...dense.slice(1).map(toClient)];
+            // Last resort: assume the box fills the pad (can be off by a
+            // few px when Duolingo adds a margin).
+            moves = dense.map(toClient);
         }
+        moves = this.constructor.simplifyMoves(moves);
         const first = moves[0];
         window.console.logger({ guideUsed, movePoints: moves.length });
 
-        const innerTarget = traceEl.querySelector("canvas, svg") ?? traceEl;
-        // The element under the point may differ from the container (overlay divs).
-        const elAtFirst = document.elementFromPoint(first.clientX, first.clientY) ?? innerTarget;
-        const targets = [...new Set([elAtFirst, innerTarget, traceEl, document])];
-        const opts = (p) => ({ bubbles: true, cancelable: true, composed: true, ...p });
-        const safeDispatch = (el, evt) => {
-            try { el.dispatchEvent(evt); } catch (e) { window.console.logger({ dispatchFailed: evt.type, e: String(e) }); }
-        };
-        const fireAll = (makeEvt) => targets.forEach((t) => safeDispatch(t, makeEvt()));
-        const makeTouch = (c, id = 1) => {
+        // The pad handles only mouse + touch events, on the svg itself
+        // (React props: onMouseDown/Move/Up, onTouch*). One mouse event per
+        // step to that svg: every extra event type or target ran the
+        // handler again (measured ~14ms per step with the old fan-out).
+        const pad = svgRoot ?? traceEl;
+        const mouse = (type, c, buttons) => {
             try {
-                return new Touch({ identifier: id, target: innerTarget, clientX: c.clientX, clientY: c.clientY });
+                pad.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, composed: true, ...c, buttons }));
             } catch (e) {
-                return null;
+                window.console.logger({ dispatchFailed: type, e: String(e) });
             }
         };
 
-        fireAll(() => new PointerEvent("pointerover", opts({ ...first, pointerId: 1, isPrimary: true, pointerType: "touch" })));
         // Hover to the start point first (no buttons): mimics aiming and
         // avoids the teleport from the previous stroke-end counting as ink.
-        fireAll(() => new PointerEvent("pointermove", opts({ ...first, pointerId: 1, isPrimary: true, pointerType: "touch", buttons: 0, pressure: 0 })));
-        fireAll(() => new MouseEvent("mousemove", opts({ ...first, buttons: 0 })));
+        mouse("mousemove", first, 0);
         await sleep(20);
-        fireAll(() => new PointerEvent("pointerdown", opts({ ...first, pointerId: 1, isPrimary: true, pointerType: "touch", buttons: 1, pressure: 0.5 })));
-        fireAll(() => new MouseEvent("mousedown", opts({ ...first, buttons: 1 })));
-        const t0 = makeTouch(first);
-        if (t0) fireAll(() => new TouchEvent("touchstart", opts({ touches: [t0], targetTouches: [t0], changedTouches: [t0] })));
-
-        let prev = first;
-        for (const c of moves.slice(1)) {
-            const moveInit = { ...c, pointerId: 1, isPrimary: true, pointerType: "touch", buttons: 1, pressure: 0.5, movementX: c.clientX - prev.clientX, movementY: c.clientY - prev.clientY };
-            fireAll(() => new PointerEvent("pointermove", opts(moveInit)));
-            fireAll(() => new MouseEvent("mousemove", opts({ ...c, buttons: 1 })));
-            const tm = makeTouch(c);
-            if (tm) fireAll(() => new TouchEvent("touchmove", opts({ touches: [tm], targetTouches: [tm], changedTouches: [tm] })));
-            prev = c;
-            await sleep(stepMs);
-        }
-
-        const last = moves[moves.length - 1];
-        fireAll(() => new PointerEvent("pointerup", opts({ ...last, pointerId: 1, isPrimary: true, pointerType: "touch", buttons: 0, pressure: 0 })));
-        fireAll(() => new MouseEvent("mouseup", opts({ ...last, buttons: 0 })));
-        const t1 = makeTouch(last);
-        if (t1) fireAll(() => new TouchEvent("touchend", opts({ touches: [], targetTouches: [], changedTouches: [t1] })));
+        mouse("mousedown", first, 1);
+        await this.playMoves(moves, (c) => mouse("mousemove", c, 1));
+        mouse("mouseup", moves[moves.length - 1], 0);
         window.console.logger({ strokeDrawn: moves.length });
     },
 });
@@ -521,6 +561,39 @@ Object.assign(DuolingoChallenge, {
             }
         }
         return pts;
+    },
+
+    simplifyMoves(pts, maxStep = 6, tol = 0.1) {
+        // Dense client points -> pen steps: long (up to maxStep px) on
+        // straight runs, short in tight turns. A step may skip points only
+        // if they all lie within tol px of it. Coarse steps through a
+        // hairpin lose GUARDRAIL tracking (stroke stops part-way): in 没,
+        // 6px steps failed and 2px passed; tol 0.1 gives ~2px there.
+        if (pts.length < 3) return pts.slice();
+        const dist = [0];
+        for (let k = 1; k < pts.length; k++) {
+            dist.push(dist[k - 1] + Math.hypot(pts[k].clientX - pts[k - 1].clientX, pts[k].clientY - pts[k - 1].clientY));
+        }
+        const dev = (p, a, b) => {
+            const dx = b.clientX - a.clientX, dy = b.clientY - a.clientY;
+            const len = Math.hypot(dx, dy);
+            if (!len) return Math.hypot(p.clientX - a.clientX, p.clientY - a.clientY);
+            return Math.abs(dx * (a.clientY - p.clientY) - dy * (a.clientX - p.clientX)) / len;
+        };
+        const fits = (i, j) => {
+            if (dist[j] - dist[i] > maxStep) return false;
+            for (let m = i + 1; m < j; m++) if (dev(pts[m], pts[i], pts[j]) > tol) return false;
+            return true;
+        };
+        const out = [pts[0]];
+        let i = 0;
+        while (i < pts.length - 1) {
+            let j = i + 1;
+            while (j + 1 < pts.length && fits(i, j + 1)) j++;
+            out.push(pts[j]);
+            i = j;
+        }
+        return out;
     },
 
     interpolatePoints(points, step = 2) {

@@ -167,3 +167,128 @@ test("write: PREDRAWN ink is never the highlight", (t) => {
     assert.equal(c.findActiveStrokeIndex(MA_STROKES, new Set(), track, preDone), 1);
     assert.equal(track.highlight, "_22UPm");
 });
+
+test("write: done = PREDRAWN or ink, never a stroke that is not rendered yet", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
+    t.after(page.close);
+    assert.deepEqual([...challenge(page, { strokes: MA_STROKES }).doneStrokeIndices(MA_STROKES)], [0]);
+});
+
+test("write: hand-drawn ink (pathLength) is never the highlight, even with nothing PREDRAWN", (t) => {
+    const strokes = MA_STROKES.map((s) => ({ ...s, strokeDrawMode: "FREEHAND" }));
+    const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
+    t.after(page.close);
+    const c = challenge(page, { strokes });
+    const preDone = c.doneStrokeIndices(strokes);
+    assert.deepEqual([...preDone], [0]);
+    const track = {};
+    assert.equal(c.findActiveStrokeIndex(strokes, new Set(), track, preDone), 1);
+    assert.equal(track.highlight, "_22UPm");
+});
+
+test("write: unrendered strokes map through the stroke box transform", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
+    t.after(page.close);
+    // 马 pad: 109 box scaled 2.633 and centered in 307px, pad at (100, 50).
+    const k = 2.63302752293578;
+    page.document.querySelector("._1vFJk").getScreenCTM = () => ({ a: k, b: 0, c: 0, d: k, e: 100 + 153.5 - 54.5 * k, f: 50 + 153.5 - 54.5 * k });
+    const [p] = challenge(page, { strokes: MA_STROKES }).strokeBoxToClient([[54.5, 54.5]]);
+    assert.deepEqual([p.clientX, p.clientY], [253.5, 203.5], "box center = pad center");
+});
+
+test("write: no transform available leaves box math to the caller", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
+    t.after(page.close);
+    assert.equal(challenge(page, { strokes: MA_STROKES }).strokeBoxToClient([[1, 1]]), null);
+});
+
+test("stroke playback: one given move per frame", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS);
+    t.after(page.close);
+    let frames = 0;
+    const raf = page.window.requestAnimationFrame;
+    page.window.requestAnimationFrame = (cb) => raf((ts) => { frames++; cb(ts); });
+    const moves = Array.from({ length: 10 }, (_, k) => ({ clientX: k * 6, clientY: 0 }));
+    const got = [];
+    await challenge(page).playMoves(moves, (c, prev) => got.push([prev.clientX, c.clientX]));
+    assert.equal(frames, 9);
+    assert.deepEqual(got, moves.slice(1).map((c, k) => [moves[k].clientX, c.clientX]));
+});
+
+test("stroke playback: finishes when animation frames never fire (hidden tab)", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS);
+    t.after(page.close);
+    page.window.requestAnimationFrame = () => 0;
+    const got = [];
+    await challenge(page).playMoves([{ clientX: 0, clientY: 0 }, { clientX: 6, clientY: 0 }, { clientX: 12, clientY: 0 }], (c) => got.push(c.clientX));
+    assert.deepEqual(got, [6, 12]);
+});
+
+test("pen steps: long on straight runs, short through a hairpin", (t) => {
+    const page = loadPage(LESSON_SCRIPTS);
+    t.after(page.close);
+    page.window.PTS = [
+        ...Array.from({ length: 31 }, (_, k) => ({ clientX: k * 2, clientY: 0 })), // straight 60px
+        ...Array.from({ length: 12 }, (_, k) => ({ clientX: 60 + 4 * Math.sin(((k + 1) * Math.PI) / 12), clientY: 4 - 4 * Math.cos(((k + 1) * Math.PI) / 12) })), // r=4 U-turn
+        ...Array.from({ length: 10 }, (_, k) => ({ clientX: 58 - k * 2, clientY: 8 })), // back
+    ];
+    const out = JSON.parse(page.run("JSON.stringify(DuolingoChallenge.simplifyMoves(window.PTS))"));
+    const steps = out.slice(1).map((p, k) => Math.hypot(p.clientX - out[k].clientX, p.clientY - out[k].clientY));
+    assert.ok(steps.every((d) => d <= 6 + 1e-9), "never longer than 6px");
+    assert.ok(steps.slice(0, 10).every((d) => d > 5), "straight part uses long steps");
+    const turn = out.filter((p) => p.clientX > 60.5);
+    assert.ok(turn.length >= 5, `turn keeps short steps (${turn.length} points)`);
+    assert.deepEqual(out.at(-1), { clientX: 40, clientY: 8 });
+});
+
+// GUARDRAIL write: every stroke has a guide ("_287Na"); the target is a
+// second path on stroke 1 ("_22UPm"); stroke 0 is done ink (pathLength).
+const GR_STROKES = MA_STROKES.map((s) => ({ ...s, strokeDrawMode: "GUARDRAIL" }));
+const GR_HTML = `<div data-test="challenge challenge-characterWrite"><div class="_2GkiA"><svg>
+    ${GR_STROKES.map((s) => `<path class="_287Na" d="${s.path}"></path>`).join("")}
+    <path class="_1vFJk" d="${GR_STROKES[0].path}" pathLength="1"></path>
+    <path class="_22UPm" d="${GR_STROKES[1].path}"></path>
+    <path class="_1e5Zt" d="${GR_STROKES[1].path}"></path>
+</svg></div></div>`;
+
+test("guardrail: target found on a second path over the guide, and retried while it stays", (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: GR_HTML });
+    t.after(page.close);
+    const c = challenge(page, { strokes: GR_STROKES });
+    const track = {};
+    assert.equal(c.findActiveStrokeIndex(GR_STROKES, new Set(), track, new Set()), 1);
+    assert.ok(["_22UPm", "_1e5Zt"].includes(track.highlight));
+    assert.equal(c.findActiveStrokeIndex(GR_STROKES, new Set([1]), track, new Set()), 1, "rejected stroke is retried");
+});
+
+test("stroke events: mouse only, to the pad svg only", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: GR_HTML });
+    t.after(page.close);
+    const c = challenge(page, { strokes: GR_STROKES });
+    const svg = page.document.querySelector("svg");
+    const seen = [];
+    for (const type of ["mousedown", "mousemove", "mouseup", "pointermove", "touchmove"]) {
+        page.document.addEventListener(type, (e) => seen.push(`${e.type}@${e.target.tagName.toLowerCase()}`), true);
+    }
+    await c.dispatchStroke(svg, [[0, 0], [10, 0]], null);
+    assert.ok(seen.length > 3);
+    assert.ok(seen.every((e) => /^mouse(down|move|up)@svg$/.test(e)), seen.join(" "));
+});
+
+test("stroke accepted: resolves on the svg change, not on a polling tick", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
+    t.after(page.close);
+    const c = challenge(page, { strokes: MA_STROKES });
+    const before = c.snapshotStrokeSvg();
+    setTimeout(() => page.document.querySelector("._22UPm").setAttribute("class", "_1vFJk"), 20);
+    const t0 = Date.now();
+    assert.equal(await c.waitForStrokeAccepted(null, 1, before), true);
+    assert.ok(Date.now() - t0 < 120, `took ${Date.now() - t0}ms`);
+});
+
+test("stroke accepted: false when the svg never changes", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
+    t.after(page.close);
+    const c = challenge(page, { strokes: MA_STROKES });
+    assert.equal(await c.waitForSvgChange(() => false, 50), false);
+});
