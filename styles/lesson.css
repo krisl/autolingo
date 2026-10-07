@@ -6,6 +6,16 @@ button.autolingo-solve {
     margin-top: 10px;
 }
 
+/* Build id of the code this tab runs (scripts/buildBadge.js). Differs
+   from the popup's id = tab loaded before the last extension reload. */
+button.autolingo-solve::after {
+    content: var(--al-build, "");
+    margin-left: 0.5em;
+    font-size: 0.6em;
+    font-weight: normal;
+    opacity: 0.6;
+}
+
 div.autolingo-buttonsection {
     display: none;
 }

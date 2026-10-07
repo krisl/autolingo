@@ -6,6 +6,9 @@
     "permissions": [
         "storage"
     ],
+    "background": {
+        "service_worker": "scripts/buildStamp.js"
+    },
     "action": {
         "default_title": "Autolingo",
         "default_popup": "popup/popup.html"
@@ -34,7 +37,8 @@
         {
             "js": [
                 "scripts/displayDefaults.js",
-                "scripts/displaySettings.js"
+                "scripts/displaySettings.js",
+                "scripts/buildBadge.js"
             ],
             "matches": [
                 "*://*.duolingo.com/*"

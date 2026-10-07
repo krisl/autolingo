@@ -22,3 +22,9 @@ function bindSlider(sliderId, valueId, storageKey, fallback) {
 
 bindSlider("hanzi-slider", "hanzi-value", "alHanziScale", DISPLAY_DEFAULTS.alHanziScale);
 bindSlider("pinyin-slider", "pinyin-value", "alPinyinScale", DISPLAY_DEFAULTS.alPinyinScale);
+
+// Current build id (scripts/buildStamp.js). The Solve button shows the id
+// its tab was loaded with; a different id there means: reload that tab.
+chrome.storage.local.get("alBuild").then(({ alBuild }) => {
+    document.getElementById("build-id").innerText = alBuild ?? "?";
+});
