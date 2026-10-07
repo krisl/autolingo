@@ -261,18 +261,44 @@ test("guardrail: target found on a second path over the guide, and retried while
     assert.equal(c.findActiveStrokeIndex(GR_STROKES, new Set([1]), track, new Set()), 1, "rejected stroke is retried");
 });
 
-test("stroke events: mouse only, to the pad svg only", async (t) => {
+test("stroke events: mouse only, at the element under the start point (the pen marker)", async (t) => {
     const page = loadPage(LESSON_SCRIPTS, { html: GR_HTML });
     t.after(page.close);
     const c = challenge(page, { strokes: GR_STROKES });
     const svg = page.document.querySelector("svg");
+    svg.insertAdjacentHTML("beforeend", `<g class="_1h31R"><image></image></g>`);
+    const marker = svg.querySelector("image");
+    page.document.elementFromPoint = () => marker;
     const seen = [];
     for (const type of ["mousedown", "mousemove", "mouseup", "pointermove", "touchmove"]) {
         page.document.addEventListener(type, (e) => seen.push(`${e.type}@${e.target.tagName.toLowerCase()}`), true);
     }
     await c.dispatchStroke(svg, [[0, 0], [10, 0]], null);
     assert.ok(seen.length > 3);
-    assert.ok(seen.every((e) => /^mouse(down|move|up)@svg$/.test(e)), seen.join(" "));
+    assert.ok(seen.every((e) => /^mouse(down|move|up)@image$/.test(e)), seen.join(" "));
+});
+
+test("stroke events: element under the start point outside the pad falls back to the pad", async (t) => {
+    const page = loadPage(LESSON_SCRIPTS, { html: GR_HTML });
+    t.after(page.close);
+    const svg = page.document.querySelector("svg");
+    page.document.elementFromPoint = () => page.document.body;
+    const seen = [];
+    page.document.addEventListener("mousedown", (e) => seen.push(e.target.tagName.toLowerCase()), true);
+    await challenge(page, { strokes: GR_STROKES }).dispatchStroke(svg, [[0, 0], [10, 0]], null);
+    assert.deepEqual(seen, ["svg"]);
+});
+
+test("guardrail: a part-way stroke resumes at the marker; a marker elsewhere is ignored", (t) => {
+    const page = loadPage(LESSON_SCRIPTS);
+    t.after(page.close);
+    const c = challenge(page);
+    const moves = Array.from({ length: 11 }, (_, k) => ({ clientX: k * 2, clientY: 0 }));
+    const xs = (m) => Array.from(m, (p) => p.clientX);
+    assert.deepEqual(xs(c.resumeAtMarker(moves, { clientX: 12.5, clientY: 1 })), [12.5, 14, 16, 18, 20]);
+    assert.deepEqual(xs(c.resumeAtMarker(moves, { clientX: 0, clientY: 0 })), xs(moves), "marker at start");
+    assert.deepEqual(xs(c.resumeAtMarker(moves, { clientX: 50, clientY: 50 })), xs(moves), "marker on another stroke");
+    assert.deepEqual(xs(c.resumeAtMarker(moves, null)), xs(moves));
 });
 
 test("stroke accepted: resolves on the svg change, not on a polling tick", async (t) => {

@@ -385,6 +385,28 @@ Object.assign(DuolingoChallenge.prototype, {
         return points.map(([x, y]) => ({ clientX: m.a * x + m.c * y + m.e, clientY: m.b * x + m.d * y + m.f }));
     },
 
+    markerClientPoint(pad) {
+        // Client coords of the pen marker's center, or null. Its circle is
+        // centered on the group origin, so the box center is that point.
+        const marker = queryFirst(SELECTORS.traceMarker, pad, true);
+        const r = marker?.getBoundingClientRect?.();
+        if (!r || !r.width) return null;
+        return { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+    },
+
+    resumeAtMarker(moves, marker, maxDist = 4) {
+        // GUARDRAIL: a part-way attempt leaves the marker mid-stroke, and
+        // only a drag that starts ON it continues the stroke. If the marker
+        // lies on this stroke, start there; otherwise draw it whole.
+        if (!marker) return moves;
+        let best = -1, bestDist = maxDist;
+        moves.forEach((m, k) => {
+            const d = Math.hypot(m.clientX - marker.clientX, m.clientY - marker.clientY);
+            if (d < bestDist) { bestDist = d; best = k; }
+        });
+        return best > 0 ? [marker, ...moves.slice(best + 1)] : moves;
+    },
+
     async playMoves(moves, onMove) {
         // ONE move per animation frame, like real touch input (browsers
         // coalesce moves per frame); several per frame each force a layout
@@ -433,18 +455,23 @@ Object.assign(DuolingoChallenge.prototype, {
             // few px when Duolingo adds a margin).
             moves = dense.map(toClient);
         }
-        moves = this.constructor.simplifyMoves(moves);
+        const pad = svgRoot ?? traceEl;
+        moves = this.constructor.simplifyMoves(this.resumeAtMarker(moves, this.markerClientPoint(pad)));
         const first = moves[0];
+        const last = moves[moves.length - 1];
         window.console.logger({ guideUsed, movePoints: moves.length });
 
-        // The pad handles only mouse + touch events, on the svg itself
-        // (React props: onMouseDown/Move/Up, onTouch*). One mouse event per
-        // step to that svg: every extra event type or target ran the
-        // handler again (measured ~14ms per step with the old fan-out).
-        const pad = svgRoot ?? traceEl;
+        // The pad handles only mouse + touch events (React props on the
+        // svg: onMouseDown/Move/Up, onTouch*). One mouse event per step:
+        // every extra event type or target ran the handler again (~14ms
+        // per step with the old pointer+mouse+touch fan-out). The target is
+        // the element under the start point: GUARDRAIL only starts a drag
+        // that grabs the pen marker there; events bubble to the svg.
+        const under = document.elementFromPoint?.(first.clientX, first.clientY);
+        const target = under && pad.contains(under) ? under : pad;
         const mouse = (type, c, buttons) => {
             try {
-                pad.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, composed: true, ...c, buttons }));
+                target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, composed: true, ...c, buttons }));
             } catch (e) {
                 window.console.logger({ dispatchFailed: type, e: String(e) });
             }
@@ -455,8 +482,10 @@ Object.assign(DuolingoChallenge.prototype, {
         mouse("mousemove", first, 0);
         await sleep(20);
         mouse("mousedown", first, 1);
-        await this.playMoves(moves, (c) => mouse("mousemove", c, 1));
-        mouse("mouseup", moves[moves.length - 1], 0);
+        // Hold at the end for a few frames: the marker lags the pen and
+        // stopped ~2.5px short of the end when released at once.
+        await this.playMoves([...moves, last, last, last], (c) => mouse("mousemove", c, 1));
+        mouse("mouseup", last, 0);
         window.console.logger({ strokeDrawn: moves.length });
     },
 });

@@ -17,6 +17,9 @@ const SELECTORS = {
         "[data-test='challenge challenge-characterWrite'] ._2GkiA svg",
         "[data-test='challenge challenge-characterTrace'] ._2GkiA svg",
     ],
+    // Draggable pen marker (circle + arrow) at the target stroke's start,
+    // or where a part-way GUARDRAIL attempt stopped.
+    traceMarker: ["g._1h31R"],
     // Challenge roots for write/trace quizzes (scope for guide lookups).
     challengeRoot: [
         "[data-test='challenge challenge-characterWrite']",
