@@ -26,4 +26,6 @@ test("popup and lesson page start from the same default sizes", async (t) => {
     assert.equal(popup.document.getElementById("hanzi-value").innerText, `${Math.round(style.getPropertyValue("--al-hanzi") * 100)}%`);
     assert.equal(popup.document.getElementById("pinyin-value").innerText, `${Math.round(style.getPropertyValue("--al-pinyin") * 100)}%`);
     assert.equal(style.getPropertyValue("--al-hanzi"), "1.35");
+    assert.equal(popup.document.getElementById("trim-value").innerText, `${lesson.document.documentElement.dataset.alAudioTrimMs} ms`);
+    assert.equal(lesson.document.documentElement.dataset.alAudioTrimMs, "0");
 });

@@ -57,15 +57,19 @@ test("tap answer still goes in when Duolingo's Howler global is missing", async 
     assert.equal(clicks, 1);
 });
 
-for (const [ttsDisabled, expected] of [[false, [600, 600]], [true, []]]) {
-    test(`syllableTap: waits for each tile's audio (isOptionTtsDisabled=${ttsDisabled})`, async (t) => {
+for (const [ttsDisabled, expected] of [[false, [300, 300]], [true, [0, 0]]]) {
+    test(`syllableTap: waits until each tile's audio stops (isOptionTtsDisabled=${ttsDisabled})`, async (t) => {
         const tile = (ch) => `<button data-test="${ch}-challenge-tap-token"><span data-test="challenge-tap-token-text">${ch}</span></button>`;
         const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-syllableTap"><div data-test="word-bank">${["钥", "匙"].map(tile).join("")}</div></div>` });
         t.after(page.close);
         const waits = [];
-        page.window.recordWait = (ms) => waits.push(ms);
-        page.run(`window.sleep = (ms = 0) => { if (ms > 200) recordWait(ms); return Promise.resolve(); };
-            window.Howler = { _howls: [{ playing: () => true, duration: () => 1.5, seek: () => 0 }] };`);
+        page.window.recordWait = (ms) => { if (ms === 50) waits[waits.length - 1] += 50; };
+        page.window.newTap = () => waits.push(0);
+        // Each clip plays for 6 more checks after the tap, then stops.
+        page.run(`window.sleep = (ms = 0) => { recordWait(ms); return Promise.resolve(); };
+            let left = 0;
+            window.Howler = { _howls: [{ playing: () => left-- > 0, duration: () => 1.1, seek: () => 0 }] };
+            document.addEventListener("click", () => { left = 7; newTap(); }, true);`);
         await challenge(page, {
             type: "syllableTap",
             targetLanguage: "zh",
@@ -74,7 +78,23 @@ for (const [ttsDisabled, expected] of [[false, [600, 600]], [true, []]]) {
             choices: [{ text: "钥" }, { text: "匙" }],
             correctIndices: [0, 1],
         }).solveByTapping();
-        assert.deepEqual(waits, expected, "1.5s clip minus 0.9s trailing silence, per tap");
+        assert.deepEqual(waits, expected, "polls every 50ms until the clip stops");
+    });
+}
+
+for (const [trim, expected] of [[0, 1000], [300, 700]]) {
+    test(`tap audio: next tap when only the popup's trim (${trim}ms) is left of the clip`, async (t) => {
+        const tile = (w) => `<button data-test="${w}-challenge-tap-token"><span data-test="challenge-tap-token-text">${w}</span></button>`;
+        const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="word-bank">${tile("这些")}</div>` });
+        t.after(page.close);
+        page.document.documentElement.dataset.alAudioTrimMs = String(trim);
+        // A 1.2s clip, 0.2s in after the first check; each sleep(50) advances it.
+        page.run(`let pos = 0.2, polled = 0;
+            window.sleep = (ms = 0) => { if (ms === 50) { pos += 0.05; polled += 50; } return Promise.resolve(); };
+            window.polledMs = () => polled;
+            window.Howler = { _howls: [{ playing: () => pos < 1.2, duration: () => 1.2, seek: () => pos }] };`);
+        await challenge(page, { type: "translate", targetLanguage: "zh", challengeGeneratorIdentifier: { specificType: "reverse_tap" }, correctTokens: ["这些"] }).solveByTapping();
+        assert.ok(Math.abs(page.run("polledMs()") - expected) <= 50, `waited ${page.run("polledMs()")}ms`);
     });
 }
 

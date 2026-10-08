@@ -15,7 +15,12 @@ class DuolingoChallenge {
     }
 
     printDebugInfo() {
-        window.console.logger("challengeType: " + this.challengeInfo.type);
+        // One plain-text summary line: readable and copyable straight from
+        // the console (logged objects need expanding).
+        const c = this.challengeInfo;
+        const typing = !!getPageData()?.challengeToggleState?.isToggledToTyping;
+        window.console.logger(`[al] challenge: ${c.type}/${c.challengeGeneratorIdentifier?.specificType ?? "-"}`
+            + ` · typing ${typing ? "on" : "off"} · tile audio ${c.isOptionTtsDisabled ? "off" : "on"} · Howler ${window.Howler ? "yes" : "no"}`);
         window.console.logger(this.challengeInfo);
         const tts = this.challengeInfo.solutionTts
         if (tts) {
@@ -287,18 +292,22 @@ class DuolingoChallenge {
             // Let each tile's audio play before the next tap.
             const playsTileAudio = ['tap_gap', 'reverse_tap', 'listen_tap'].includes(specificTypeProblem)
                 || (this.challengeInfo.type === "syllableTap" && !this.challengeInfo.isOptionTtsDisabled);
-            if (playsTileAudio) {
+            if (!playsTileAudio) {
+                window.console.logger(`[al] tap ${token}: no audio wait (${this.challengeInfo.type}/${specificTypeProblem})`);
+            } else {
                 await sleep(200);
                 const howl = window.Howler?._howls?.find(obj => obj.playing())
                 if (howl) {
-                    const duration = howl.duration()
-                    const currentPos = howl.seek()
-                    const remainingSeconds = duration - currentPos 
-                    console.logger("playing audio", {duration, currentPos, remainingSeconds})
-                    const silence = ['it', 'zh', 'fr'].includes(this.challengeInfo.targetLanguage) ? 900 : 200
-                    await sleep(Math.max(200, (remainingSeconds * 1000) - silence));
+                    // Wait until only the popup's "audio trim" is left of the
+                    // clip (its trailing silence; 0 = to the end), max 3s.
+                    // A fixed 0.9s trim cut words off.
+                    const trimMs = Number(document.documentElement.dataset.alAudioTrimMs) || 0;
+                    const leftMs = () => (howl.duration() - howl.seek()) * 1000;
+                    let waited = 0;
+                    for (; waited < 3000 && howl.playing() && leftMs() > trimMs; waited += 50) await sleep(50);
+                    window.console.logger(`[al] tap ${token}: audio ${howl.duration().toFixed(2)}s → waited ${waited}ms more (trim ${trimMs}ms)`);
                 } else {
-                    console.logger("Nothingn playing")
+                    window.console.logger(`[al] tap ${token}: no audio playing → wait 1000ms`);
                     await sleep(1000);
                 }
             }
