@@ -284,7 +284,10 @@ class DuolingoChallenge {
                 return;
             }
             tokensText[token].click();
-            if (['tap_gap', 'reverse_tap', 'listen_tap'].includes(specificTypeProblem)) {
+            // Let each tile's audio play before the next tap.
+            const playsTileAudio = ['tap_gap', 'reverse_tap', 'listen_tap'].includes(specificTypeProblem)
+                || (this.challengeInfo.type === "syllableTap" && !this.challengeInfo.isOptionTtsDisabled);
+            if (playsTileAudio) {
                 await sleep(200);
                 const howl = window.Howler?._howls?.find(obj => obj.playing())
                 if (howl) {

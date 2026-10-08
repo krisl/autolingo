@@ -57,6 +57,27 @@ test("tap answer still goes in when Duolingo's Howler global is missing", async 
     assert.equal(clicks, 1);
 });
 
+for (const [ttsDisabled, expected] of [[false, [600, 600]], [true, []]]) {
+    test(`syllableTap: waits for each tile's audio (isOptionTtsDisabled=${ttsDisabled})`, async (t) => {
+        const tile = (ch) => `<button data-test="${ch}-challenge-tap-token"><span data-test="challenge-tap-token-text">${ch}</span></button>`;
+        const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-syllableTap"><div data-test="word-bank">${["钥", "匙"].map(tile).join("")}</div></div>` });
+        t.after(page.close);
+        const waits = [];
+        page.window.recordWait = (ms) => waits.push(ms);
+        page.run(`window.sleep = (ms = 0) => { if (ms > 200) recordWait(ms); return Promise.resolve(); };
+            window.Howler = { _howls: [{ playing: () => true, duration: () => 1.5, seek: () => 0 }] };`);
+        await challenge(page, {
+            type: "syllableTap",
+            targetLanguage: "zh",
+            isOptionTtsDisabled: ttsDisabled,
+            challengeGeneratorIdentifier: { specificType: "syllable_tap" },
+            choices: [{ text: "钥" }, { text: "匙" }],
+            correctIndices: [0, 1],
+        }).solveByTapping();
+        assert.deepEqual(waits, expected, "1.5s clip minus 0.9s trailing silence, per tap");
+    });
+}
+
 test("syllableTap: taps the choices at correctIndices in order, not the prompt's letters", async (t) => {
     const tile = (ch) => `<button data-test="${ch}-challenge-tap-token"><span data-test="challenge-tap-token-text">${ch}</span></button>`;
     const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-syllableTap"><div data-test="word-bank">${["聊", "钥", "婆", "匙", "危"].map(tile).join("")}</div></div>` });
