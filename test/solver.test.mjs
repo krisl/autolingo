@@ -57,6 +57,25 @@ test("tap answer still goes in when Duolingo's Howler global is missing", async 
     assert.equal(clicks, 1);
 });
 
+test("syllableTap: taps the choices at correctIndices in order, not the prompt's letters", async (t) => {
+    const tile = (ch) => `<button data-test="${ch}-challenge-tap-token"><span data-test="challenge-tap-token-text">${ch}</span></button>`;
+    const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-syllableTap"><div data-test="word-bank">${["聊", "钥", "婆", "匙", "危"].map(tile).join("")}</div></div>` });
+    t.after(page.close);
+    page.run(`window.sleep = () => Promise.resolve()`);
+    const tapped = [];
+    for (const b of page.document.querySelectorAll("button")) b.addEventListener("click", () => tapped.push(b.textContent));
+    const c = challenge(page, {
+        type: "syllableTap",
+        prompt: "key",
+        challengeGeneratorIdentifier: { specificType: "syllable_tap" },
+        choices: ["聊", "钥", "婆", "匙", "危"].map((text) => ({ text })),
+        correctIndices: [1, 3],
+    });
+    assert.equal(typeof c.get_async_solver(), "function");
+    await c.solveByTapping();
+    assert.deepEqual(tapped, ["钥", "匙"]);
+});
+
 for (const [type, expected] of [["characterIntro", "judge-1"], ["select", "choice-1"], ["readComprehension", "choice-1"], ["dialogue", "choice-1"]]) {
     test(`${type}: clicks the correct option`, async (t) => {
         const page = loadPage(LESSON_SCRIPTS, { html: `

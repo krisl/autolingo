@@ -94,10 +94,10 @@ class DuolingoChallenge {
                 return () => this.solveByTyping();
 
             case "tapComplete":
+            case "syllableTap":
                 return () => this.solveByTapping();
 
             case "svgPuzzle":
-            case "syllableTap":
                 return () => this.solveTapTokensInOrder();
 
             case "characterTrace":
@@ -250,7 +250,12 @@ class DuolingoChallenge {
         const specificTypeProblem = this.challengeInfo.challengeGeneratorIdentifier.specificType;
         const targetLanguage = this.challengeInfo.targetLanguage
         console.logger({targetLanguage, specificTypeProblem})
-        let correctTokens = this.challengeInfo.correctTokens ?? this.challengeInfo.prompt?.split("") ?? this.challengeInfo.correctIndices.map(i => this.challengeInfo.choices[i].text);
+        // syllableTap: the prompt is the meaning ("key"), not the answer;
+        // the answer is the choices at correctIndices (钥, 匙).
+        const byIndices = () => this.challengeInfo.correctIndices?.map(i => this.challengeInfo.choices[i]?.text);
+        let correctTokens = this.challengeInfo.correctTokens
+            ?? (this.challengeInfo.type === "syllableTap" ? byIndices() : undefined)
+            ?? this.challengeInfo.prompt?.split("") ?? byIndices();
         let wordBank = this.constructor.getElementsByDataTest("word-bank")[0];
         if (!wordBank) {
             window.console.logger("tapText: missing word-bank");
