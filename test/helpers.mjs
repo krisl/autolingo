@@ -43,3 +43,14 @@ export function setRect(el, { left = 0, top = 0, width, height }) {
 }
 
 export const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+
+// Wait until cond() holds, one 0 ms timer at a time. The limit is a number
+// of steps, not a time: a busy machine slows the steps down but cannot
+// reorder them, so a fixed wait like tick(60) is never needed.
+export async function until(cond, what = "condition", maxSteps = 100) {
+    for (let i = 0; i < maxSteps; i++) {
+        if (cond()) return;
+        await tick();
+    }
+    throw new Error(`${what}: still false after ${maxSteps} steps`);
+}

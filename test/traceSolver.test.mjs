@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { LESSON_SCRIPTS, loadPage, setRect } from "./helpers.mjs";
+import { LESSON_SCRIPTS, loadPage, setRect, tick } from "./helpers.mjs";
 
 function challenge(page, info = {}) {
     page.window.testInfo = info;
@@ -317,6 +317,11 @@ test("pen overshoots the end by 1-3px along the final direction", (t) => {
     assert.deepEqual(out.map((p) => [r(p.clientX), r(p.clientY)]), [[3.6, 4.8], [4.2, 5.6], [4.8, 6.4]]);
 });
 
+// "Reacts at once, not on a timer": the svg observer runs before any timer
+// can fire, so the wait must be over before a 0 ms timer. Checks the order
+// of events, not elapsed time, so a slow machine cannot fail it.
+const beforeAnyTimer = (promise) => Promise.race([promise, tick().then(() => "a timer fired first")]);
+
 test("guardrail: next stroke starts as soon as the target moves on, not after a quiet period", async (t) => {
     const page = loadPage(LESSON_SCRIPTS, { html: GR_HTML });
     t.after(page.close);
@@ -324,12 +329,9 @@ test("guardrail: next stroke starts as soon as the target moves on, not after a 
     const track = {};
     const drawn = new Set([1]);
     c.findActiveStrokeIndex(GR_STROKES, drawn, track, new Set());
-    setTimeout(() => {
-        for (const p of page.document.querySelectorAll("._22UPm, ._1e5Zt")) p.setAttribute("d", GR_STROKES[2].path);
-    }, 20);
-    const t0 = Date.now();
-    assert.equal(await c.waitForStrokeDone(page.document.querySelector("svg"), GR_STROKES, 1, "", drawn, track, new Set()), true);
-    assert.ok(Date.now() - t0 < 200, `took ${Date.now() - t0}ms`);
+    const done = c.waitForStrokeDone(page.document.querySelector("svg"), GR_STROKES, 1, "", drawn, track, new Set());
+    for (const p of page.document.querySelectorAll("._22UPm, ._1e5Zt")) p.setAttribute("d", GR_STROKES[2].path);
+    assert.equal(await beforeAnyTimer(done), true);
 });
 
 test("stroke accepted: resolves on the svg change, not on a polling tick", async (t) => {
@@ -337,10 +339,9 @@ test("stroke accepted: resolves on the svg change, not on a polling tick", async
     t.after(page.close);
     const c = challenge(page, { strokes: MA_STROKES });
     const before = c.snapshotStrokeSvg();
-    setTimeout(() => page.document.querySelector("._22UPm").setAttribute("class", "_1vFJk"), 20);
-    const t0 = Date.now();
-    assert.equal(await c.waitForStrokeAccepted(null, 1, before), true);
-    assert.ok(Date.now() - t0 < 120, `took ${Date.now() - t0}ms`);
+    const accepted = c.waitForStrokeAccepted(null, 1, before);
+    page.document.querySelector("._22UPm").setAttribute("class", "_1vFJk");
+    assert.equal(await beforeAnyTimer(accepted), true);
 });
 
 test("stroke accepted: false when the svg never changes", async (t) => {
