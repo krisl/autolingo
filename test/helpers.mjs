@@ -1,6 +1,7 @@
 // Test helpers: load the extension's classic scripts into a jsdom page,
 // sharing one global scope the way Chrome does for content scripts.
 import vm from "node:vm";
+import { beforeEach } from "node:test";
 import { readFileSync } from "node:fs";
 import { JSDOM, VirtualConsole } from "jsdom";
 
@@ -42,15 +43,42 @@ export function setRect(el, { left = 0, top = 0, width, height }) {
     el.getBoundingClientRect = () => ({ left, top, width, height, right: left + width, bottom: top + height, x: left, y: top, toJSON() { return this; } });
 }
 
-export const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+// Fake clock in every test: setTimeout, setInterval (and so jsdom's
+// requestAnimationFrame) and Date only move when a test moves them, so no
+// test depends on real time or on how busy the machine is. Each page's
+// 500 ms status poll stays still too, unless a test advances the clock.
+// Limits below are in fake ms. t.mock restores real timers after each test.
+const FAKE_START = Date.parse("2026-01-01T00:00:00Z");
+beforeEach((t) => t.mock.timers.enable({ apis: ["setTimeout", "setInterval", "Date"], now: FAKE_START }));
 
-// Wait until cond() holds, one 0 ms timer at a time. The limit is a number
-// of steps, not a time: a busy machine slows the steps down but cannot
-// reorder them, so a fixed wait like tick(60) is never needed.
-export async function until(cond, what = "condition", maxSteps = 100) {
-    for (let i = 0; i < maxSteps; i++) {
-        if (cond()) return;
-        await tick();
+// Let every queued promise callback (and MutationObserver) run, with no
+// time passing. setImmediate is not faked, and runs after all of them.
+export const flush = () => new Promise((r) => setImmediate(r));
+
+// Move the fake clock forward by ms, 1 ms at a time, so code that awaits
+// between timers sets its next timer before that timer is due.
+export async function advance(t, ms) {
+    for (let i = 0; i < ms; i++) {
+        await flush();
+        t.mock.timers.tick(1);
     }
-    throw new Error(`${what}: still false after ${maxSteps} steps`);
+    await flush();
+}
+
+// Move the fake clock until cond() holds.
+export async function until(t, cond, what = "condition", maxMs = 5000) {
+    for (let ms = 0; ms <= maxMs; ms++) {
+        await flush();
+        if (cond()) return;
+        t.mock.timers.tick(1);
+    }
+    throw new Error(`${what}: still false after ${maxMs} fake ms`);
+}
+
+// Move the fake clock until promise settles; its value (or throw).
+export async function settle(t, promise, maxMs = 5000) {
+    let done = false;
+    const watched = promise.finally(() => { done = true; });
+    await until(t, () => done, "promise settled", maxMs);
+    return watched;
 }

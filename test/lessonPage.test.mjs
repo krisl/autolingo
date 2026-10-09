@@ -20,7 +20,7 @@ function lessonWithStubSolver(t, url) {
     }));
     const finishSolve = () => page.window.pendingSolves.splice(0).forEach((r) => r());
     // lessonPage.js clears its guard a few steps after the solver ends.
-    const guardReleased = () => until(() => !page.run("autolingoSolving"), "solve guard released");
+    const guardReleased = () => until(t, () => !page.run("autolingoSolving"), "solve guard released");
     return { ...page, guessing, finishSolve, guardReleased, solveButton: () => page.document.querySelector("button.autolingo-solve") };
 }
 
@@ -56,20 +56,20 @@ test("solve button gets its own section when Duolingo has none", (t) => {
 
 // "Does not happen" checks: the page without ?autosolve gets the event
 // first, so by the time its twin with ?autosolve has reacted, it would
-// have reacted too. Timers fire in the order they were set, however slow.
+// have reacted too. The fake clock fires timers in the order they were set.
 test("autosolve: solves on GUESSING only with ?autosolve", async (t) => {
     const off = lessonWithStubSolver(t);
     const on = lessonWithStubSolver(t, AUTOSOLVE_URL);
     off.guessing();
     on.guessing();
-    await until(() => on.window.solverRuns === 1, "autosolve ran");
+    await until(t, () => on.window.solverRuns === 1, "autosolve ran");
     assert.equal(off.window.solverRuns, 0);
 });
 
 test("autosolve: a manual click during autosolve does not solve twice", async (t) => {
     const page = lessonWithStubSolver(t, AUTOSOLVE_URL);
     page.guessing();
-    await until(() => page.window.solverRuns === 1, "autosolve ran");
+    await until(t, () => page.window.solverRuns === 1, "autosolve ran");
     page.solveButton().click();
     page.finishSolve();
     await page.guardReleased();
@@ -86,6 +86,6 @@ test("autosolve: clicks continue on BLAMING only with ?autosolve", async (t) => 
     };
     const off = blaming("https://www.duolingo.com/lesson");
     const on = blaming(AUTOSOLVE_URL);
-    await until(() => on.clicks === 1, "autosolve clicked continue");
+    await until(t, () => on.clicks === 1, "autosolve clicked continue");
     assert.equal(off.clicks, 0);
 });

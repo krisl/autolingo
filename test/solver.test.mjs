@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { LESSON_SCRIPTS, loadPage, setFiber, tick } from "./helpers.mjs";
+import { LESSON_SCRIPTS, advance, loadPage, setFiber, settle } from "./helpers.mjs";
 
 function challenge(page, info) {
     page.window.testInfo = info;
@@ -18,7 +18,7 @@ test("listenComplete shows the best solution as text, not HTML", async (t) => {
         displayTokens: [{ text: "a" }, { text: "word", isBlank: true }],
         challengeResponseTrackingProperties: { best_solution: best },
     }).solveFillBlank();
-    await tick(5);
+    await advance(t, 1); // the solution box goes in on a 1 ms timer
 
     assert.deepEqual(typed, ["word"]);
     const box = page.document.getElementById("box");
@@ -216,7 +216,6 @@ function tapChallengePage(t, words, pretapped, flyBackMs = 30) {
     const page = loadPage(LESSON_SCRIPTS, { html: `<div data-test="challenge challenge-translate">
         <div id="answer"></div><div data-test="word-bank"></div></div>` });
     t.after(page.close);
-    page.run(`window.sleep = (ms = 0) => new Promise((r) => setTimeout(r, Math.min(ms, 10)))`);
     const doc = page.document;
     const answer = doc.getElementById("answer");
     const tile = (text) => {
@@ -247,6 +246,6 @@ function tapChallengePage(t, words, pretapped, flyBackMs = 30) {
 test("tap: tiles tapped before Solve are sent back first", async (t) => {
     const { page, answerText } = tapChallengePage(t, ["board", "History", "homework", "day"], ["board", "History"]);
     assert.equal(answerText(), "board History");
-    await challenge(page, { type: "translate", challengeGeneratorIdentifier: { specificType: "tap" }, correctTokens: ["History", "homework"] }).solveByTapping();
+    await settle(t, challenge(page, { type: "translate", challengeGeneratorIdentifier: { specificType: "tap" }, correctTokens: ["History", "homework"] }).solveByTapping());
     assert.equal(answerText(), "History homework");
 });

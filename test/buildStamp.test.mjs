@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import vm from "node:vm";
-import { manifest, read, loadPage, tick } from "./helpers.mjs";
+import { manifest, read, loadPage, flush } from "./helpers.mjs";
 
 // Run the service worker with a fake chrome API whose files are `files`.
 async function stamp(files) {
@@ -37,6 +37,6 @@ test("build badge: page gets the id it was loaded with as a CSS string", async (
     });
     t.after(page.close);
     page.run(read("scripts/buildBadge.js"));
-    await tick();
+    await flush();
     assert.equal(page.document.documentElement.style.getPropertyValue("--al-build"), '"abc123"');
 });

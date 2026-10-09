@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { LESSON_SCRIPTS, loadPage, setRect, tick } from "./helpers.mjs";
+import { LESSON_SCRIPTS, flush, loadPage, setRect, settle } from "./helpers.mjs";
 
 function challenge(page, info = {}) {
     page.window.testInfo = info;
@@ -209,7 +209,7 @@ test("stroke playback: one given move per frame", async (t) => {
     page.window.requestAnimationFrame = (cb) => raf((ts) => { frames++; cb(ts); });
     const moves = Array.from({ length: 10 }, (_, k) => ({ clientX: k * 6, clientY: 0 }));
     const got = [];
-    await challenge(page).playMoves(moves, (c, prev) => got.push([prev.clientX, c.clientX]));
+    await settle(t, challenge(page).playMoves(moves, (c, prev) => got.push([prev.clientX, c.clientX])));
     assert.equal(frames, 9);
     assert.deepEqual(got, moves.slice(1).map((c, k) => [moves[k].clientX, c.clientX]));
 });
@@ -219,7 +219,7 @@ test("stroke playback: finishes when animation frames never fire (hidden tab)", 
     t.after(page.close);
     page.window.requestAnimationFrame = () => 0;
     const got = [];
-    await challenge(page).playMoves([{ clientX: 0, clientY: 0 }, { clientX: 6, clientY: 0 }, { clientX: 12, clientY: 0 }], (c) => got.push(c.clientX));
+    await settle(t, challenge(page).playMoves([{ clientX: 0, clientY: 0 }, { clientX: 6, clientY: 0 }, { clientX: 12, clientY: 0 }], (c) => got.push(c.clientX)));
     assert.deepEqual(got, [6, 12]);
 });
 
@@ -272,7 +272,7 @@ test("stroke events: mouse only, at the element under the start point (the pen m
     for (const type of ["mousedown", "mousemove", "mouseup", "pointermove", "touchmove"]) {
         page.document.addEventListener(type, (e) => seen.push(`${e.type}@${e.target.tagName.toLowerCase()}`), true);
     }
-    await c.dispatchStroke(svg, [[0, 0], [10, 0]], null);
+    await settle(t, c.dispatchStroke(svg, [[0, 0], [10, 0]], null));
     assert.ok(seen.length > 3);
     assert.ok(seen.every((e) => /^mouse(down|move|up)@image$/.test(e)), seen.join(" "));
 });
@@ -284,7 +284,7 @@ test("stroke events: element under the start point outside the pad falls back to
     page.document.elementFromPoint = () => page.document.body;
     const seen = [];
     page.document.addEventListener("mousedown", (e) => seen.push(e.target.tagName.toLowerCase()), true);
-    await challenge(page, { strokes: GR_STROKES }).dispatchStroke(svg, [[0, 0], [10, 0]], null);
+    await settle(t, challenge(page, { strokes: GR_STROKES }).dispatchStroke(svg, [[0, 0], [10, 0]], null));
     assert.deepEqual(seen, ["svg"]);
 });
 
@@ -317,10 +317,14 @@ test("pen overshoots the end by 1-3px along the final direction", (t) => {
     assert.deepEqual(out.map((p) => [r(p.clientX), r(p.clientY)]), [[3.6, 4.8], [4.2, 5.6], [4.8, 6.4]]);
 });
 
-// "Reacts at once, not on a timer": the svg observer runs before any timer
-// can fire, so the wait must be over before a 0 ms timer. Checks the order
-// of events, not elapsed time, so a slow machine cannot fail it.
-const beforeAnyTimer = (promise) => Promise.race([promise, tick().then(() => "a timer fired first")]);
+// "Reacts at once, not on a timer": the fake clock stands still, so only
+// the svg observer can end the wait.
+async function withoutTimePassing(promise) {
+    let result = "still waiting";
+    promise.then((v) => { result = v; });
+    await flush();
+    return result;
+}
 
 test("guardrail: next stroke starts as soon as the target moves on, not after a quiet period", async (t) => {
     const page = loadPage(LESSON_SCRIPTS, { html: GR_HTML });
@@ -331,7 +335,7 @@ test("guardrail: next stroke starts as soon as the target moves on, not after a 
     c.findActiveStrokeIndex(GR_STROKES, drawn, track, new Set());
     const done = c.waitForStrokeDone(page.document.querySelector("svg"), GR_STROKES, 1, "", drawn, track, new Set());
     for (const p of page.document.querySelectorAll("._22UPm, ._1e5Zt")) p.setAttribute("d", GR_STROKES[2].path);
-    assert.equal(await beforeAnyTimer(done), true);
+    assert.equal(await withoutTimePassing(done), true);
 });
 
 test("stroke accepted: resolves on the svg change, not on a polling tick", async (t) => {
@@ -341,12 +345,12 @@ test("stroke accepted: resolves on the svg change, not on a polling tick", async
     const before = c.snapshotStrokeSvg();
     const accepted = c.waitForStrokeAccepted(null, 1, before);
     page.document.querySelector("._22UPm").setAttribute("class", "_1vFJk");
-    assert.equal(await beforeAnyTimer(accepted), true);
+    assert.equal(await withoutTimePassing(accepted), true);
 });
 
 test("stroke accepted: false when the svg never changes", async (t) => {
     const page = loadPage(LESSON_SCRIPTS, { html: MA_HTML });
     t.after(page.close);
     const c = challenge(page, { strokes: MA_STROKES });
-    assert.equal(await c.waitForSvgChange(() => false, 50), false);
+    assert.equal(await settle(t, c.waitForSvgChange(() => false, 50)), false);
 });

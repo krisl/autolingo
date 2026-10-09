@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { manifest, read, loadPage, tick } from "./helpers.mjs";
+import { manifest, read, loadPage, flush } from "./helpers.mjs";
 
 // chrome.storage.local stub with nothing stored yet.
 const emptyStorage = (window) => {
@@ -19,7 +19,7 @@ test("popup and lesson page start from the same default sizes", async (t) => {
     const isolated = manifest.content_scripts.find((c) => c.js.includes("scripts/displaySettings.js")).js;
     const lesson = loadPage(isolated, { setup: emptyStorage });
     t.after(lesson.close);
-    await tick();
+    await flush();
 
     // jsdom has no real innerText: reading it back returns what popup.js set.
     const style = lesson.document.documentElement.style;
